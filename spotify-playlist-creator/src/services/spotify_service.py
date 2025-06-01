@@ -43,7 +43,7 @@ class SpotifyService:
         genres = analysis_data['genre_suggestions']
         
         placeholder_songs = []
-        for i in range(min(song_count, 25)):  # Cap at 25 for demo
+        for i in range(min(song_count, 25)): 
             placeholder_songs.append({
                 "id": f"track_id_{i+1}",
                 "name": f"{primary_mood.title()} Song {i+1}",

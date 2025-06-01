@@ -4,25 +4,365 @@ HTML_TEMPLATE = """
 <head>
     <title>AI Spotify Playlist Creator</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; background: #f8f9fa; }
-        .container { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-        h1 { color: #1db954; text-align: center; margin-bottom: 10px; }
-        .subtitle { text-align: center; color: #666; margin-bottom: 30px; font-style: italic; }
-        textarea { width: 100%; height: 140px; padding: 20px; margin: 15px 0; border-radius: 10px; border: 2px solid #e0e0e0; font-size: 16px; resize: vertical; }
-        textarea:focus { border-color: #1db954; outline: none; }
-        input[type="text"] { width: 100%; padding: 20px; margin: 15px 0; border-radius: 10px; border: 2px solid #e0e0e0; font-size: 16px; }
-        input[type="text"]:focus { border-color: #1db954; outline: none; }
-        button { background: linear-gradient(135deg, #1db954, #1ed760); color: white; padding: 20px 40px; border: none; border-radius: 10px; cursor: pointer; font-size: 18px; font-weight: bold; width: 100%; margin-top: 20px; transition: all 0.3s; }
-        button:hover { background: linear-gradient(135deg, #1ed760, #1db954); transform: translateY(-2px); }
-        .result { margin-top: 30px; padding: 30px; background: #f8f9fa; border-radius: 10px; border-left: 5px solid #1db954; }
-        .loading { display: none; color: #1db954; text-align: center; font-size: 18px; margin: 20px 0; }
-        .analysis-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin: 20px 0; }
-        .analysis-card { background: white; padding: 20px; border-radius: 10px; border: 1px solid #e0e0e0; }
-        .analysis-card h4 { color: #1db954; margin-top: 0; }
-        .tag { display: inline-block; background: #1db954; color: white; padding: 5px 10px; border-radius: 15px; margin: 2px; font-size: 12px; }
-        .examples { background: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0; }
-        .examples h3 { color: #1db954; margin-top: 0; }
-        .example { margin: 10px 0; padding: 10px; background: white; border-radius: 5px; border-left: 3px solid #1db954; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --pastel-pink: #ffeef7;
+            --pastel-lavender: #f0e6ff;
+            --pastel-blue: #e6f2ff;
+            --pastel-mint: #e6fff9;
+            --pastel-peach: #ffe6d9;
+            --pastel-yellow: #fff9e6;
+            --soft-purple: #b19cd9;
+            --soft-blue: #87ceeb;
+            --soft-green: #98d8c8;
+            --soft-coral: #f7a8a8;
+            --soft-gray: #9ca3af;
+            --dark-text: #374151;
+            --medium-text: #6b7280;
+            --light-text: #9ca3af;
+            --white: #ffffff;
+            --cream: #fefcf3;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
+            background: linear-gradient(135deg, var(--pastel-pink) 0%, var(--pastel-lavender) 25%, var(--pastel-blue) 50%, var(--pastel-mint) 75%, var(--pastel-peach) 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--dark-text);
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .container { 
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            padding: 50px;
+            border-radius: 25px;
+            box-shadow: 
+                0 25px 50px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+            z-index: 1;
+        }
+        
+        h1 { 
+            background: linear-gradient(135deg, var(--soft-purple), var(--soft-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center; 
+            margin-bottom: 15px;
+            font-size: 2.5em;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+        
+        .subtitle { 
+            text-align: center; 
+            color: var(--medium-text); 
+            margin-bottom: 40px; 
+            font-size: 1.1em;
+            font-weight: 400;
+            line-height: 1.6;
+        }
+        
+        .examples {
+            background: rgba(255, 248, 230, 0.7);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            padding: 30px;
+            border-radius: 20px;
+            margin: 30px 0;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 
+                0 8px 25px rgba(0, 0, 0, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.5);
+        }
+        
+        .examples h3 { 
+            background: linear-gradient(135deg, var(--soft-coral), var(--soft-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            font-weight: 600;
+        }
+        
+        .example { 
+            margin: 15px 0; 
+            padding: 20px; 
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 15px; 
+            border-left: 4px solid var(--soft-purple);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 
+                0 4px 15px rgba(0, 0, 0, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.7);
+            transition: all 0.3s ease;
+            line-height: 1.6;
+        }
+        
+        .example:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .example strong {
+            color: var(--soft-purple);
+            font-weight: 600;
+        }
+        
+        textarea { 
+            width: 100%; 
+            height: 160px; 
+            padding: 25px; 
+            margin: 20px 0; 
+            border-radius: 20px; 
+            border: 2px solid rgba(177, 156, 217, 0.3);
+            font-size: 16px; 
+            font-family: inherit;
+            resize: vertical;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            line-height: 1.6;
+        }
+        
+        textarea:focus { 
+            border-color: var(--soft-purple);
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(177, 156, 217, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        textarea::placeholder {
+            color: var(--light-text);
+            font-style: italic;
+        }
+        
+        input[type="text"] { 
+            width: 100%; 
+            padding: 25px; 
+            margin: 20px 0; 
+            border-radius: 20px; 
+            border: 2px solid rgba(177, 156, 217, 0.3);
+            font-size: 16px;
+            font-family: inherit;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        
+        input[type="text"]:focus { 
+            border-color: var(--soft-purple);
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(177, 156, 217, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        input[type="text"]::placeholder {
+            color: var(--light-text);
+            font-style: italic;
+        }
+        
+        button { 
+            background: linear-gradient(135deg, var(--soft-purple), var(--soft-blue));
+            color: white; 
+            padding: 25px 50px; 
+            border: none; 
+            border-radius: 20px; 
+            cursor: pointer; 
+            font-size: 18px; 
+            font-weight: 600; 
+            width: 100%; 
+            margin-top: 25px; 
+            transition: all 0.3s ease;
+            font-family: inherit;
+            letter-spacing: 0.02em;
+            box-shadow: 0 8px 25px rgba(177, 156, 217, 0.3);
+        }
+        
+        button:hover { 
+            background: linear-gradient(135deg, var(--soft-blue), var(--soft-green));
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(177, 156, 217, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(-1px);
+        }
+        
+        .result { 
+            margin-top: 40px; 
+            padding: 40px; 
+            background: rgba(230, 242, 255, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 25px; 
+            border-left: 6px solid var(--soft-blue);
+            box-shadow: 
+                0 15px 35px rgba(0, 0, 0, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+        
+        .result h3 {
+            background: linear-gradient(135deg, var(--soft-blue), var(--soft-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 1.5em;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        
+        .result h4 {
+            color: var(--soft-blue);
+            font-weight: 600;
+            margin: 25px 0 15px 0;
+            font-size: 1.2em;
+        }
+        
+        .loading { 
+            display: none; 
+            background: linear-gradient(135deg, var(--soft-purple), var(--soft-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center; 
+            font-size: 18px; 
+            margin: 30px 0;
+            font-weight: 500;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        
+        .analysis-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); 
+            gap: 25px; 
+            margin: 30px 0; 
+        }
+        
+        .analysis-card { 
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            padding: 25px; 
+            border-radius: 20px; 
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 
+                0 8px 25px rgba(0, 0, 0, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.6);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .analysis-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+        }
+        
+        .result ul {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 
+                0 4px 15px rgba(0, 0, 0, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.5);
+        }
+        
+        .result li {
+            margin: 12px 0;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(177, 156, 217, 0.1);
+            line-height: 1.6;
+        }
+        
+        .result li:last-child {
+            border-bottom: none;
+        }
+        
+        .result a {
+            color: var(--soft-blue);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .result a:hover {
+            color: var(--soft-purple);
+            text-decoration: underline;
+        }
+        
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 30px 25px;
+                margin: 10px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .analysis-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            textarea, input[type="text"], button {
+                padding: 20px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -32,9 +372,9 @@ HTML_TEMPLATE = """
         
         <div class="examples">
             <h3>💡 Try these example prompts:</h3>
-            <div class="example"><strong>Simple:</strong> "Happy morning vibes"</div>
-            <div class="example"><strong>Detailed:</strong> "I'm driving through the countryside on a foggy autumn morning, feeling nostalgic about old friendships. I want acoustic guitar-driven songs from the 2000s with thoughtful lyrics."</div>
-            <div class="example"><strong>Very Detailed:</strong> "Picture this: It's 2 AM, I'm in my dimly lit apartment, rain pattering against the windows. I just finished reading a melancholic novel about lost love. I want to hear slow, atmospheric music with ethereal female vocals, maybe some trip-hop or ambient electronic elements, songs that feel like they belong in a David Lynch film."</div>
+            <div class="example"><strong>Simple:</strong> "I get no hoes..."</div>
+            <div class="example"><strong>Detailed:</strong> "I want to seem different from the others, so give me songs only from the 80s."</div>
+            <div class="example"><strong>Very Detailed:</strong> "There are few people whom I really love, and still fewer of whom I think well. The more I see of the world, the more am I dissatisfied with it; and every day confirms my belief of the inconsistency of all human characters, and of the little dependence that can be placed on the appearance of merit or sense."</div>
         </div>
         
         <form id="playlistForm">
