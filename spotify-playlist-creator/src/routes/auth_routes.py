@@ -11,8 +11,8 @@ client_id = os.getenv('SPOTIFY_CLIENT_ID')
 # Dynamic redirect URI
 if os.getenv('VERCEL_URL'):
     redirect_uri = f"https://{os.getenv('VERCEL_URL')}/callback"
-elif os.getenv('REDIRECT_URI'):
-    redirect_uri = os.getenv('REDIRECT_URI')
+elif os.getenv('SPOTIFY_REDIRECT_URI'):
+    redirect_uri = os.getenv('SPOTIFY_REDIRECT_URI')
 else:
     redirect_uri = 'http://127.0.0.1:5000/callback'
 
