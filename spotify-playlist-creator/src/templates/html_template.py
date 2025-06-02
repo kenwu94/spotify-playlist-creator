@@ -344,6 +344,20 @@ HTML_TEMPLATE = """
             transform: translateY(-1px);
         }
         
+        button:disabled {
+            background: linear-gradient(135deg, var(--soft-gray), var(--light-text));
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+            opacity: 0.6;
+        }
+        
+        button:disabled:hover {
+            background: linear-gradient(135deg, var(--soft-gray), var(--light-text));
+            transform: none;
+            box-shadow: none;
+        }
+        
         .result { 
             margin-top: 40px; 
             padding: 40px; 
@@ -393,72 +407,393 @@ HTML_TEMPLATE = """
             50% { opacity: 0.6; }
         }
         
-        .analysis-grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); 
-            gap: 25px; 
-            margin: 30px 0; 
-        }
-        
-        .analysis-card { 
-            background: rgba(255, 255, 255, 0.6);
+        /* Cool Loading Animation */
+        .playlist-generator {
+            display: none;
+            text-align: center;
+            margin: 40px 0;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.7);
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
-            padding: 25px; 
-            border-radius: 20px; 
+            border-radius: 25px;
             border: 1px solid rgba(255, 255, 255, 0.3);
             box-shadow: 
-                0 8px 25px rgba(0, 0, 0, 0.08),
-                inset 0 1px 0 rgba(255, 255, 255, 0.5);
-            transition: all 0.3s ease;
+                0 15px 35px rgba(0, 0, 0, 0.12),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4);
             position: relative;
             overflow: hidden;
         }
         
-        .analysis-card::before {
+        .playlist-generator::before {
             content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(163, 136, 199, 0.1), transparent);
+            animation: shimmer 3s ease-in-out infinite;
+            transform: rotate(45deg);
+        }
+        
+        @keyframes shimmer {
+            0%, 100% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            50% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+        
+        .floating-notes {
             position: absolute;
             top: 0;
             left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
         }
         
-        .result ul {
-            background: rgba(255, 255, 255, 0.5);
+        .note {
+            position: absolute;
+            font-size: 1.5em;
+            opacity: 0.3;
+            animation: floatNote 4s ease-in-out infinite;
+            color: var(--soft-purple);
+        }
+        
+        .note:nth-child(1) { left: 10%; animation-delay: 0s; }
+        .note:nth-child(2) { left: 20%; animation-delay: 0.5s; }
+        .note:nth-child(3) { left: 30%; animation-delay: 1s; }
+        .note:nth-child(4) { left: 70%; animation-delay: 1.5s; }
+        .note:nth-child(5) { left: 80%; animation-delay: 2s; }
+        .note:nth-child(6) { left: 90%; animation-delay: 2.5s; }
+        .note:nth-child(7) { left: 15%; animation-delay: 3s; }
+        .note:nth-child(8) { left: 85%; animation-delay: 3.5s; }
+        
+        @keyframes floatNote {
+            0%, 100% { 
+                transform: translateY(100px) rotate(0deg);
+                opacity: 0;
+            }
+            10% { opacity: 0.3; }
+            50% { 
+                transform: translateY(-20px) rotate(180deg);
+                opacity: 0.6;
+            }
+            90% { opacity: 0.3; }
+        }
+        
+        .vinyl-record {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--soft-purple), var(--soft-blue));
+            box-shadow: 
+                0 2px 8px rgba(163, 136, 199, 0.3),
+                inset 0 0 0 4px rgba(255, 255, 255, 0.2),
+                inset 0 0 0 6px var(--soft-purple),
+                inset 0 0 0 8px rgba(255, 255, 255, 0.3);
+            animation: vinylSpin 4s linear infinite;
+            z-index: 2;
+            opacity: 0.7;
+        }
+        
+        .vinyl-record::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 4px;
+            height: 4px;
+            background: linear-gradient(135deg, var(--soft-blue), var(--soft-green));
+            border-radius: 50%;
+            box-shadow: 0 0 4px rgba(163, 136, 199, 0.4);
+        }
+        
+        .vinyl-record::after {
+            content: '♪';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.8em;
+            color: white;
+            text-shadow: 0 0 6px rgba(255, 255, 255, 0.6);
+            animation: noteFloat 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes noteFloat {
+            0% { transform: translate(-50%, -50%) scale(1); }
+            100% { transform: translate(-50%, -50%) scale(1.1); }
+        }
+        
+        @keyframes vinylSpin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .music-visualizer {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            height: 100px;
+            margin: 30px 0;
+            gap: 8px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .bar {
+            width: 6px;
+            background: linear-gradient(to top, var(--soft-purple), var(--soft-blue), var(--soft-green));
+            border-radius: 3px;
+            animation: musicBars 1.2s ease-in-out infinite;
+            transform-origin: bottom;
+            box-shadow: 0 0 10px rgba(163, 136, 199, 0.4);
+        }
+        
+        .bar:nth-child(1) { animation-delay: 0s; height: 25px; }
+        .bar:nth-child(2) { animation-delay: 0.1s; height: 40px; }
+        .bar:nth-child(3) { animation-delay: 0.2s; height: 60px; }
+        .bar:nth-child(4) { animation-delay: 0.3s; height: 80px; }
+        .bar:nth-child(5) { animation-delay: 0.4s; height: 55px; }
+        .bar:nth-child(6) { animation-delay: 0.5s; height: 70px; }
+        .bar:nth-child(7) { animation-delay: 0.6s; height: 35px; }
+        .bar:nth-child(8) { animation-delay: 0.7s; height: 65px; }
+        .bar:nth-child(9) { animation-delay: 0.8s; height: 45px; }
+        .bar:nth-child(10) { animation-delay: 0.9s; height: 30px; }
+        .bar:nth-child(11) { animation-delay: 1.0s; height: 50px; }
+        .bar:nth-child(12) { animation-delay: 1.1s; height: 40px; }
+        
+        @keyframes musicBars {
+            0%, 100% { 
+                transform: scaleY(0.2);
+                opacity: 0.5;
+                box-shadow: 0 0 5px rgba(163, 136, 199, 0.2);
+            }
+            50% { 
+                transform: scaleY(1);
+                opacity: 1;
+                box-shadow: 0 0 15px rgba(163, 136, 199, 0.6);
+            }
+        }
+        
+        .loading-text {
+            font-size: 1.6em;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--soft-purple), var(--soft-blue), var(--soft-green));
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            animation: textFlow 3s ease-in-out infinite;
+            position: relative;
+            z-index: 2;
+            text-shadow: 0 0 30px rgba(163, 136, 199, 0.3);
+        }
+        
+        @keyframes textFlow {
+            0%, 100% { 
+                background-position: 0% 50%;
+                transform: scale(1);
+            }
+            50% { 
+                background-position: 100% 50%;
+                transform: scale(1.05);
+            }
+        }
+        
+        .loading-steps {
+            list-style: none;
+            padding: 0;
+            margin: 30px 0;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .loading-step {
+            padding: 15px 20px;
+            margin: 8px 0;
+            font-size: 1.1em;
+            color: var(--medium-text);
+            opacity: 0.4;
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
-            padding: 25px;
-            border-radius: 15px;
-            margin-top: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 
-                0 4px 15px rgba(0, 0, 0, 0.08),
-                inset 0 1px 0 rgba(255, 255, 255, 0.4);
+            transform: translateX(-20px);
         }
         
-        .result li {
-            margin: 12px 0;
-            padding: 10px 0;
-            border-bottom: 1px solid rgba(163, 136, 199, 0.15);
-            line-height: 1.6;
-        }
-        
-        .result li:last-child {
-            border-bottom: none;
-        }
-        
-        .result a {
-            color: var(--soft-blue);
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-        
-        .result a:hover {
+        .loading-step.active {
+            opacity: 1;
             color: var(--soft-purple);
-            text-decoration: underline;
+            font-weight: 600;
+            transform: translateX(0) scale(1.05);
+            background: rgba(163, 136, 199, 0.1);
+            border-color: rgba(163, 136, 199, 0.3);
+            box-shadow: 
+                0 8px 25px rgba(163, 136, 199, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+        
+        .loading-step.active .step-icon {
+            animation: iconPulse 1.5s ease-in-out infinite;
+            filter: drop-shadow(0 0 12px rgba(163, 136, 199, 0.6));
+            transform: scale(1.2);
+        }
+        
+        .loading-step.completed {
+            opacity: 0.9;
+            color: var(--soft-green);
+            transform: translateX(20px) scale(0.95);
+            background: rgba(133, 196, 181, 0.1);
+            border-color: rgba(133, 196, 181, 0.3);
+        }
+        
+        .loading-step.completed .step-icon {
+            animation: checkmark 0.6s ease-out;
+            filter: drop-shadow(0 0 8px rgba(133, 196, 181, 0.4));
+            color: var(--soft-green);
+        }
+        
+        @keyframes iconPulse {
+            0%, 100% { 
+                transform: scale(1.2);
+                filter: drop-shadow(0 0 12px rgba(163, 136, 199, 0.6));
+            }
+            50% { 
+                transform: scale(1.4);
+                filter: drop-shadow(0 0 20px rgba(163, 136, 199, 0.8));
+            }
+        }
+        
+        @keyframes checkmark {
+            0% { transform: scale(1.2); }
+            50% { transform: scale(1.6) rotate(10deg); }
+            100% { transform: scale(1.2) rotate(0deg); }
+        }
+        
+        .step-icon {
+            font-size: 1.4em;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            min-width: 28px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .progress-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--soft-purple), var(--soft-blue), var(--soft-green));
+            border-radius: 2px;
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 10px rgba(163, 136, 199, 0.5);
+        }
+        
+        .step-dots {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin: 25px 0;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: rgba(163, 136, 199, 0.3);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+        }
+        
+        .dot.active {
+            background: linear-gradient(135deg, var(--soft-purple), var(--soft-blue));
+            transform: scale(1.4);
+            box-shadow: 
+                0 0 20px rgba(163, 136, 199, 0.7),
+                inset 0 2px 4px rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .dot.active::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 24px;
+            height: 24px;
+            border: 2px solid rgba(163, 136, 199, 0.4);
+            border-radius: 50%;
+            animation: ripple 1.8s ease-out infinite;
+        }
+        
+        .dot.completed {
+            background: linear-gradient(135deg, var(--soft-green), var(--soft-blue));
+            transform: scale(1.2);
+            border-color: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 0 15px rgba(133, 196, 181, 0.6);
+        }
+        
+        @keyframes ripple {
+            0% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0.8;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(2.5);
+                opacity: 0;
+            }
+        }
+        
+        /* Enhanced responsive design for loading */
+        @media (max-width: 768px) {
+            .playlist-generator {
+                padding: 25px 20px;
+                margin: 20px 0;
+            }
+            
+            .vinyl-record {
+                display: none;
+            }
+            
+            .loading-text {
+                font-size: 1.3em;
+            }
+            
+            .loading-step {
+                padding: 12px 15px;
+                font-size: 1em;
+            }
+            
+            .music-visualizer {
+                height: 80px;
+                gap: 6px;
+            }
+            
+            .bar {
+                width: 5px;
+            }
+            
+            .floating-notes {
+                display: none;
+            }
         }
         
         /* Responsive design */
@@ -621,7 +956,6 @@ HTML_TEMPLATE = """
             border-radius: 4px;
             pointer-events: none;
             z-index: 3;
-            transition: left 0.2s ease, transform 0.15s ease;
             box-shadow: 
                 0 3px 12px rgba(163, 136, 199, 0.4),
                 inset 0 1px 3px rgba(255, 255, 255, 0.6);
@@ -707,16 +1041,16 @@ HTML_TEMPLATE = """
         .slider::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 0;
-            height: 0;
+            width: 20px;
+            height: 20px;
             background: transparent;
             border: none;
             cursor: pointer;
         }
         
         .slider::-moz-range-thumb {
-            width: 0;
-            height: 0;
+            width: 20px;
+            height: 20px;
             background: transparent;
             border: none;
             cursor: pointer;
@@ -724,8 +1058,8 @@ HTML_TEMPLATE = """
         }
         
         .slider::-ms-thumb {
-            width: 0;
-            height: 0;
+            width: 20px;
+            height: 20px;
             background: transparent;
             border: none;
             cursor: pointer;
@@ -743,7 +1077,6 @@ HTML_TEMPLATE = """
             border-radius: 4px;
             pointer-events: none;
             z-index: 3;
-            transition: left 0.2s ease, transform 0.15s ease;
             box-shadow: 
                 0 3px 12px rgba(163, 136, 199, 0.4),
                 inset 0 1px 3px rgba(255, 255, 255, 0.6);
@@ -1030,12 +1363,6 @@ HTML_TEMPLATE = """
             // Calculate position for slider thumb (0% to 100%)
             const percentage = ((value - 10) / (50 - 10)) * 100;
             sliderThumb.style.left = `${percentage}%`;
-            
-            // Add a subtle scale animation
-            sliderThumb.style.transform = 'translate(-50%, -50%) rotate(45deg) scale(1.15)';
-            setTimeout(() => {
-                sliderThumb.style.transform = 'translate(-50%, -50%) rotate(45deg) scale(1)';
-            }, 150);
         }
         
         // Add mouse event listeners for better responsiveness
@@ -1052,6 +1379,7 @@ HTML_TEMPLATE = """
             const prompt = document.getElementById('prompt').value;
             const playlistName = document.getElementById('playlistName').value;
             const songCount = parseInt(document.getElementById('songCount').value) || 25;
+            const submitButton = document.querySelector('button[type="submit"]');
             
             // Validate song count
             if (songCount < 10 || songCount > 50) {
@@ -1064,8 +1392,14 @@ HTML_TEMPLATE = """
                 return;
             }
             
-            document.getElementById('loading').style.display = 'block';
+            // Disable button and show loading
+            submitButton.disabled = true;
+            submitButton.textContent = 'Creating Playlist... 🎵';
+            document.getElementById('loading').style.display = 'none';
             document.getElementById('result').innerHTML = '';
+            
+            // Show cool animation
+            showPlaylistGenerator();
             
             try {
                 const response = await fetch('/create-playlist', {
@@ -1079,7 +1413,7 @@ HTML_TEMPLATE = """
                 });
                 
                 const data = await response.json();
-                document.getElementById('loading').style.display = 'none';
+                hidePlaylistGenerator();
                 
                 if (data.error) {
                     document.getElementById('result').innerHTML = `<div style="color: red;">Error: ${data.error}</div>`;
@@ -1087,10 +1421,150 @@ HTML_TEMPLATE = """
                     displayResult(data);
                 }
             } catch (error) {
-                document.getElementById('loading').style.display = 'none';
+                hidePlaylistGenerator();
                 document.getElementById('result').innerHTML = `<div style="color: red;">Error: ${error.message}</div>`;
+            } finally {
+                // Re-enable button
+                submitButton.disabled = false;
+                submitButton.textContent = 'Make My Playlist ⭐';
             }
         });
+        
+        function showPlaylistGenerator() {
+            const generatorHtml = `
+                <div class="playlist-generator" id="playlistGenerator">
+                    <div class="floating-notes">
+                        <div class="note">♪</div>
+                        <div class="note">♫</div>
+                        <div class="note">♪</div>
+                        <div class="note">♬</div>
+                        <div class="note">♪</div>
+                        <div class="note">♫</div>
+                        <div class="note">♪</div>
+                        <div class="note">♬</div>
+                    </div>
+                    
+                    <div class="vinyl-record"></div>
+                    
+                    <div class="loading-text">Crafting Your Perfect Playlist</div>
+                    
+                    <div class="music-visualizer">
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                    </div>
+                    
+                    <div class="step-dots">
+                        <div class="dot active" id="dot1"></div>
+                        <div class="dot" id="dot2"></div>
+                        <div class="dot" id="dot3"></div>
+                        <div class="dot" id="dot4"></div>
+                        <div class="dot" id="dot5"></div>
+                    </div>
+                    
+                    <ul class="loading-steps">
+                        <li class="loading-step active" id="step1">
+                            <span class="step-icon">🔍</span>
+                            <span>Analyzing your prompt and extracting mood...</span>
+                        </li>
+                        <li class="loading-step" id="step2">
+                            <span class="step-icon">🎭</span>
+                            <span>Understanding emotions and musical preferences...</span>
+                        </li>
+                        <li class="loading-step" id="step3">
+                            <span class="step-icon">🎵</span>
+                            <span>Searching Spotify's vast music library...</span>
+                        </li>
+                        <li class="loading-step" id="step4">
+                            <span class="step-icon">📝</span>
+                            <span>Creating and customizing your playlist...</span>
+                        </li>
+                        <li class="loading-step" id="step5">
+                            <span class="step-icon">✨</span>
+                            <span>Adding final touches and saving to your library...</span>
+                        </li>
+                    </ul>
+                    
+                    <div class="progress-bar" style="width: 20%;"></div>
+                </div>
+            `;
+            
+            document.getElementById('result').innerHTML = generatorHtml;
+            document.getElementById('playlistGenerator').style.display = 'block';
+            
+            // Animate through steps
+            animateLoadingSteps();
+        }
+        
+        function hidePlaylistGenerator() {
+            const generator = document.getElementById('playlistGenerator');
+            if (generator) {
+                generator.style.display = 'none';
+            }
+        }
+        
+        function animateLoadingSteps() {
+            const steps = ['step1', 'step2', 'step3', 'step4', 'step5'];
+            const dots = ['dot1', 'dot2', 'dot3', 'dot4', 'dot5'];
+            let currentStep = 0;
+            
+            const stepInterval = setInterval(() => {
+                // Update progress bar
+                const progressBar = document.querySelector('.progress-bar');
+                if (progressBar) {
+                    progressBar.style.width = `${((currentStep + 1) / steps.length) * 100}%`;
+                }
+                
+                // Mark current step as completed and dot as completed
+                if (currentStep > 0) {
+                    const prevStep = document.getElementById(steps[currentStep - 1]);
+                    const prevDot = document.getElementById(dots[currentStep - 1]);
+                    if (prevStep) {
+                        prevStep.classList.remove('active');
+                        prevStep.classList.add('completed');
+                        
+                        // Change icon to checkmark for completed steps
+                        const icon = prevStep.querySelector('.step-icon');
+                        if (icon) {
+                            icon.textContent = '✓';
+                        }
+                    }
+                    if (prevDot) {
+                        prevDot.classList.remove('active');
+                        prevDot.classList.add('completed');
+                    }
+                }
+                
+                // Activate next step and dot
+                if (currentStep < steps.length) {
+                    const nextStep = document.getElementById(steps[currentStep]);
+                    const nextDot = document.getElementById(dots[currentStep]);
+                    if (nextStep) {
+                        nextStep.classList.add('active');
+                    }
+                    if (nextDot) {
+                        nextDot.classList.add('active');
+                    }
+                    currentStep++;
+                } else {
+                    clearInterval(stepInterval);
+                    
+                    // Complete the progress bar
+                    if (progressBar) {
+                        progressBar.style.width = '100%';
+                    }
+                }
+            }, 1800); // Slightly longer intervals for better visual effect
+        }
         
         function displayResult(data) {
             const analysis = data.analysis;

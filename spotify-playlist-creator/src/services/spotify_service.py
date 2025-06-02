@@ -135,14 +135,15 @@ ORIGINAL REQUEST: "{original_prompt[:200]}..."
 
 Please provide exactly {max_songs} song recommendations that:
 1. Match the mood and energy level perfectly
-2. Include a diverse mix of:
+2. Respect any specific genre, decade, or style constraints mentioned in the original request
+3. If no specific constraints are given, include a diverse mix of:
    - Popular hits and hidden gems
    - Different decades (70s, 80s, 90s, 2000s, 2010s, 2020s)
    - Various genres and subgenres
-   - Different artists (no more than 2 songs per artist)
+   - Different artists (no more than 2 songs per artist unless specifically requested)
    - International music when appropriate
-3. Create a cohesive emotional journey
-4. Include both mainstream and alternative/indie options
+4. Create a cohesive emotional journey
+5. Include both mainstream and alternative/indie options when appropriate
 
 IMPORTANT: You must provide exactly {max_songs} songs, no more, no less.
 
@@ -160,7 +161,7 @@ Format your response as a JSON array like this:
   }}
 ]
 
-Focus on creating a playlist that would genuinely resonate with someone feeling this way, not just obvious keyword matches.
+Focus on creating a playlist that would genuinely resonate with someone feeling this way, respecting their specific preferences while filling gaps with quality recommendations.
 """
         return prompt
 
