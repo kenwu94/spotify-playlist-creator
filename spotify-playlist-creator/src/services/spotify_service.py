@@ -5,6 +5,7 @@ import random
 import json
 from dotenv import load_dotenv
 from openai import OpenAI
+import logging
 
 load_dotenv()
 
@@ -116,34 +117,72 @@ class SpotifyService:
 
     def build_openai_song_prompt(self, analysis, max_songs):
         """Build a detailed prompt for OpenAI to generate song recommendations"""
-        mood = analysis.get('mood', 'neutral')
-        genres = analysis.get('genres', [])
-        energy = analysis.get('energy', 'medium')
+        mood = analysis.get('primary_mood', 'neutral')
+        genres = analysis.get('genre_suggestions', [])
+        energy = analysis.get('energy_level', 'medium')
         themes = analysis.get('themes', [])
-        keywords = analysis.get('keywords', [])
         original_prompt = analysis.get('original_prompt', '')
         
-        prompt = f"""
+        # Get user preferences from analysis
+        user_preferences = analysis.get('user_preferences_summary', {})
+        used_preferences = analysis.get('used_preferences', False)
+        
+        # Build the base prompt
+        base_requirements = f"""
 Based on this analysis of a user's music request, recommend exactly {max_songs} diverse songs:
 
 MOOD: {mood}
 ENERGY LEVEL: {energy}
 PREFERRED GENRES: {', '.join(genres) if genres else 'Any'}
 THEMES: {', '.join(themes) if themes else 'General'}
-KEY WORDS: {', '.join(keywords) if keywords else 'None'}
 ORIGINAL REQUEST: "{original_prompt[:200]}..."
+"""
+
+        # Add personalization section if preferences are available
+        personalization_section = ""
+        if used_preferences and user_preferences:
+            top_artists = user_preferences.get('top_artists', [])
+            top_genres = user_preferences.get('top_genres', [])
+            audio_profile = user_preferences.get('audio_profile', {})
+            
+            personalization_section = f"""
+
+USER LISTENING PREFERENCES (use subtly to personalize):
+- Favorite Artists: {', '.join(top_artists) if top_artists else 'None available'}
+- Favorite Genres: {', '.join(top_genres) if top_genres else 'None available'}"""
+            
+            if audio_profile:
+                personalization_section += f"""
+- Audio Profile: 
+  * Positivity level: {audio_profile.get('valence_score', 0.5):.1f}/1.0
+  * Energy preference: {audio_profile.get('energy_score', 0.5):.1f}/1.0
+  * Danceability: {audio_profile.get('danceability_score', 0.5):.1f}/1.0
+  * Typical tempo: ~{audio_profile.get('average_tempo', 120)} BPM"""
+
+            personalization_section += f"""
+
+PERSONALIZATION INSTRUCTIONS:
+- Include 30-40% songs from similar artists or genres to their favorites
+- Match their typical audio characteristics (tempo, energy, positivity) for 50% of songs
+- Still prioritize the current mood/request, but lean toward their established preferences
+- Don't be too obvious - mix familiar styles with new discoveries
+- If their favorites don't match the current mood, find similar artists in the requested genre"""
+
+        # Complete prompt
+        prompt = base_requirements + personalization_section + f"""
 
 Please provide exactly {max_songs} song recommendations that:
 1. Match the mood and energy level perfectly
 2. Respect any specific genre, decade, or style constraints mentioned in the original request
-3. If no specific constraints are given, include a diverse mix of:
+{f'3. Subtly incorporate the user\'s listening preferences (favorite artists/genres/audio characteristics)' if used_preferences else '3. Include a diverse mix of popular and alternative options'}
+4. If no specific constraints are given, include a diverse mix of:
    - Popular hits and hidden gems
    - Different decades (70s, 80s, 90s, 2000s, 2010s, 2020s)
    - Various genres and subgenres
    - Different artists (no more than 2 songs per artist unless specifically requested)
    - International music when appropriate
-4. Create a cohesive emotional journey
-5. Include both mainstream and alternative/indie options when appropriate
+5. Create a cohesive emotional journey
+6. Include both mainstream and alternative/indie options when appropriate
 
 IMPORTANT: You must provide exactly {max_songs} songs, no more, no less.
 
@@ -157,11 +196,11 @@ Format your response as a JSON array like this:
   {{
     "song": "Song Title",
     "artist": "Artist Name", 
-    "reason": "Why this song fits the mood/theme"
+    "reason": "Why this song fits the mood/theme{' (personalized pick)' if used_preferences else ''}"
   }}
 ]
 
-Focus on creating a playlist that would genuinely resonate with someone feeling this way, respecting their specific preferences while filling gaps with quality recommendations.
+Focus on creating a playlist that would genuinely resonate with someone feeling this way{", incorporating their musical taste" if used_preferences else ""}.
 """
         return prompt
 
@@ -474,7 +513,7 @@ Focus on creating a playlist that would genuinely resonate with someone feeling 
         response.raise_for_status()
         return response.json()
 
-    def search_songs(self, songs_data, max_songs=50):
+    def search_songs(self, songs_data, max_songs=30):
         """Search for multiple songs and return their IDs"""
         if not hasattr(self, 'search_token'):
             self.authenticate()
@@ -547,7 +586,7 @@ Focus on creating a playlist that would genuinely resonate with someone feeling 
             """
             
             response = self.openai_client.chat.completions.create(
-                model="gpt-4",
+                model="gpt-3.5-turbo",
                 messages=[
                     {"role": "system", "content": "You are a creative playlist naming expert. Generate short, catchy, emotionally resonant playlist names."},
                     {"role": "user", "content": name_prompt}
@@ -569,3 +608,120 @@ Focus on creating a playlist that would genuinely resonate with someone feeling 
             mood = analysis.get('primary_mood', 'Mixed')
             genre = analysis.get('genre_suggestions', ['Music'])[0] if analysis.get('genre_suggestions') else 'Music'
             return f"{mood.title()} {genre.title()} Mix"
+
+    def get_user_preferences(self, access_token):
+        """Get comprehensive user listening preferences"""
+        headers = {'Authorization': f'Bearer {access_token}'}
+        preferences = {}
+        
+        try:
+            logging.info("🎵 Fetching user's top artists...")
+            # Get top artists (long term = ~6 months)
+            top_artists_response = requests.get(
+                'https://api.spotify.com/v1/me/top/artists?time_range=long_term&limit=50',
+                headers=headers
+            )
+            if top_artists_response.status_code == 200:
+                top_artists = top_artists_response.json()['items']
+                preferences['favorite_artists'] = [artist['name'] for artist in top_artists[:20]]
+                preferences['favorite_genres'] = list(set([
+                    genre for artist in top_artists 
+                    for genre in artist.get('genres', [])
+                ]))[:15]  # Limit to top 15 genres
+                logging.info(f"✅ Found {len(preferences['favorite_artists'])} favorite artists")
+            
+            logging.info("🎵 Fetching user's top tracks...")
+            # Get top tracks
+            top_tracks_response = requests.get(
+                'https://api.spotify.com/v1/me/top/tracks?time_range=long_term&limit=50',
+                headers=headers
+            )
+            if top_tracks_response.status_code == 200:
+                top_tracks = top_tracks_response.json()['items']
+                preferences['favorite_tracks'] = [
+                    f"{track['name']} by {track['artists'][0]['name']}" 
+                    for track in top_tracks[:15]
+                ]
+                
+                # Get audio features for top tracks to understand preferences
+                track_ids = [track['id'] for track in top_tracks]
+                if track_ids:
+                    features = self.get_audio_features_batch(track_ids, access_token)
+                    if features:
+                        preferences['audio_preferences'] = self.analyze_audio_preferences(features)
+                        logging.info("✅ Analyzed audio preferences")
+            
+            logging.info("🎵 Fetching recently played tracks...")
+            # Get recently played for current mood
+            recent_response = requests.get(
+                'https://api.spotify.com/v1/me/player/recently-played?limit=30',
+                headers=headers
+            )
+            if recent_response.status_code == 200:
+                recent_tracks = recent_response.json()['items']
+                preferences['recent_artists'] = list(set([
+                    track['track']['artists'][0]['name'] 
+                    for track in recent_tracks
+                ]))[:10]
+                logging.info(f"✅ Found {len(preferences['recent_artists'])} recent artists")
+            
+            return preferences
+            
+        except Exception as e:
+            logging.error(f"❌ Error getting user preferences: {str(e)}")
+            return {}
+
+    def get_audio_features_batch(self, track_ids, access_token):
+        """Get audio features for multiple tracks"""
+        try:
+            headers = {'Authorization': f'Bearer {access_token}'}
+            # Spotify allows up to 100 track IDs per request
+            batch_size = 100
+            all_features = []
+            
+            for i in range(0, len(track_ids), batch_size):
+                batch = track_ids[i:i + batch_size]
+                ids_string = ','.join(batch)
+                
+                response = requests.get(
+                    f'https://api.spotify.com/v1/audio-features?ids={ids_string}',
+                    headers=headers
+                )
+                
+                if response.status_code == 200:
+                    features = response.json()['audio_features']
+                    # Filter out None values (tracks without features)
+                    valid_features = [f for f in features if f is not None]
+                    all_features.extend(valid_features)
+            
+            return all_features
+            
+        except Exception as e:
+            logging.error(f"❌ Error getting audio features: {str(e)}")
+            return []
+
+    def analyze_audio_preferences(self, audio_features):
+        """Analyze user's audio preferences from their top tracks"""
+        if not audio_features:
+            return {}
+        
+        # Calculate averages
+        avg_valence = sum(f['valence'] for f in audio_features) / len(audio_features)
+        avg_energy = sum(f['energy'] for f in audio_features) / len(audio_features)
+        avg_danceability = sum(f['danceability'] for f in audio_features) / len(audio_features)
+        avg_tempo = sum(f['tempo'] for f in audio_features) / len(audio_features)
+        avg_acousticness = sum(f['acousticness'] for f in audio_features) / len(audio_features)
+        avg_instrumentalness = sum(f['instrumentalness'] for f in audio_features) / len(audio_features)
+        
+        return {
+            'prefers_positive_music': avg_valence > 0.6,
+            'prefers_high_energy': avg_energy > 0.6,
+            'prefers_danceable': avg_danceability > 0.6,
+            'prefers_acoustic': avg_acousticness > 0.5,
+            'prefers_instrumental': avg_instrumentalness > 0.5,
+            'average_tempo': round(avg_tempo),
+            'valence_score': round(avg_valence, 2),
+            'energy_score': round(avg_energy, 2),
+            'danceability_score': round(avg_danceability, 2),
+            'acousticness_score': round(avg_acousticness, 2)
+        }

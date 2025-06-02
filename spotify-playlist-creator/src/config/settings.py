@@ -8,20 +8,20 @@ class Config:
     
     # OpenAI Configuration
     OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-    OPENAI_MODEL = "gpt-4"
+    OPENAI_MODEL = "gpt-3.5-turbo"
     OPENAI_TEMPERATURE = 0.8
     
     # Spotify Configuration
     SPOTIFY_CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID')
     SPOTIFY_CLIENT_SECRET = os.getenv('SPOTIFY_CLIENT_SECRET')
-    SPOTIFY_REDIRECT_URI = os.getenv('SPOTIFY_REDIRECT_URI', 'http://127.0.0.1:5000')
+    SPOTIFY_REDIRECT_URI = os.getenv('SPOTIFY_REDIRECT_URI', 'http://127.0.0.1:5000/callback')
     
     # Flask Configuration
     DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
     PORT = int(os.getenv('PORT', 5000))
     
     # Application Settings
-    MAX_SONGS_PER_PLAYLIST = 50
+    MAX_SONGS_PER_PLAYLIST = 30
     DEFAULT_SONG_COUNT = 15
     
     @classmethod

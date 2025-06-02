@@ -329,6 +329,17 @@ HTML_TEMPLATE = """
             font-family: inherit;
             letter-spacing: 0.02em;
             box-shadow: 0 8px 25px rgba(177, 156, 217, 0.3);
+            position: relative;
+        }
+        
+        .spotify-btn::before {
+            content: '✨';
+            background: linear-gradient(135deg, #1DB954, #1ed760);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 2px 4px rgba(29, 185, 84, 0.3));
+            margin-right: 8px;
         }
         
         button:hover { 
@@ -384,6 +395,10 @@ HTML_TEMPLATE = """
             font-weight: 600;
             margin: 25px 0 15px 0;
             font-size: 1.2em;
+            background: linear-gradient(135deg, var(--soft-blue), var(--soft-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         
         .loading { 
@@ -679,6 +694,11 @@ HTML_TEMPLATE = """
             min-width: 28px;
             text-align: center;
             position: relative;
+            background: linear-gradient(135deg, var(--soft-purple), var(--soft-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 2px 4px rgba(163, 136, 199, 0.3));
         }
         
         .progress-bar {
@@ -831,6 +851,16 @@ HTML_TEMPLATE = """
             margin-bottom: 15px;
             font-size: 1.3em;
             font-weight: 600;
+        }
+        
+        .login-prompt h3::before {
+            content: '🌙';
+            background: linear-gradient(135deg, var(--soft-purple), var(--soft-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 2px 4px rgba(163, 136, 199, 0.3));
+            margin-right: 8px;
         }
         
         .login-prompt p {
@@ -1124,12 +1154,11 @@ HTML_TEMPLATE = """
             font-size: 3em;
             margin-bottom: 15px;
             animation: bounce 2s ease-in-out infinite;
-        }
-        
-        @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-            40% { transform: translateY(-10px); }
-            60% { transform: translateY(-5px); }
+            background: linear-gradient(135deg, var(--soft-purple), var(--soft-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 2px 4px rgba(163, 136, 199, 0.3));
         }
         
         .success-title {
@@ -1213,6 +1242,7 @@ HTML_TEMPLATE = """
             -webkit-text-fill-color: transparent;
             background-clip: text;
             min-width: 40px;
+            filter: drop-shadow(0 2px 4px rgba(163, 136, 199, 0.3));
         }
         
         .detail-label, .link-label {
@@ -1292,6 +1322,193 @@ HTML_TEMPLATE = """
                 font-size: 1.2em;
             }
         }
+        
+        /* Preferences Toggle Styles */
+        .preferences-container {
+            background: rgba(247, 245, 237, 0.4);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+            text-align: center; /* Center the content */
+        }
+        
+        .preferences-toggle-wrapper {
+            display: flex;
+            justify-content: center; /* Center the toggle */
+            margin-bottom: 10px;
+        }
+        
+        .preferences-toggle {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 500;
+            color: var(--dark-text);
+        }
+        
+        .preferences-toggle input[type="checkbox"] {
+            display: none;
+        }
+        
+        .toggle-slider {
+            position: relative;
+            width: 50px;
+            height: 26px;
+            background: rgba(163, 136, 199, 0.3);
+            border-radius: 13px;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+        
+        .toggle-slider::before {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .preferences-toggle input:checked + .toggle-slider {
+            background: linear-gradient(135deg, var(--soft-purple), var(--soft-blue));
+        }
+        
+        .preferences-toggle input:checked + .toggle-slider::before {
+            transform: translateX(24px);
+        }
+        
+        .toggle-text {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+        }
+        
+        .toggle-icon {
+            font-size: 1.2em;
+            filter: drop-shadow(0 2px 4px rgba(163, 136, 199, 0.3));
+        }
+        
+        .preferences-description {
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: var(--light-text);
+            font-style: italic;
+            line-height: 1.4;
+            text-align: center; /* Center the description */
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .preferences-container:hover {
+            background: rgba(247, 245, 237, 0.6);
+            transform: translateY(-1px);
+        }
+
+        /* Fix loading animation centering */
+        .generator-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(247, 245, 237, 0.95);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            text-align: center; /* Ensure text is centered */
+        }
+        
+        .generator-box {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            padding: 40px;
+            border-radius: 20px;
+            border: 2px solid rgba(163, 136, 199, 0.3);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 90vw;
+            width: 400px;
+            text-align: center;
+            animation: gentleFloat 3s ease-in-out infinite;
+        }
+        
+        .generator-title {
+            font-size: 1.8em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, var(--soft-purple), var(--soft-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center; /* Ensure title is centered */
+        }
+        
+        .step-indicator {
+            display: flex;
+            justify-content: center; /* Center the step indicators */
+            align-items: center;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+        }
+        
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+            white-space: nowrap; /* Prevent text wrapping */
+        }
+        
+        .progress-text {
+            font-size: 1.1em;
+            color: var(--dark-text);
+            margin: 15px 0;
+            text-align: center; /* Center progress text */
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .preferences-toggle {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+            
+            .toggle-text {
+                justify-content: center;
+            }
+            
+            .generator-box {
+                padding: 30px 20px;
+                width: 350px;
+            }
+            
+            .step-indicator {
+                gap: 10px;
+            }
+            
+            .step {
+                font-size: 0.8em;
+                padding: 6px 10px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1322,18 +1539,35 @@ HTML_TEMPLATE = """
             
             <!-- Minimalist Song Count Slider -->
             <div class="song-count-container" style="margin: 20px 0;">
-                <label for="songCount" class="slider-label">Songs: <span id="songCountValue">25</span></label>
+                <label for="songCount" class="slider-label">Songs: <span id="songCountValue">20</span></label>
                 <div class="slider-wrapper">
                     <span class="slider-min">10</span>
                     <div class="custom-slider">
-                        <input type="range" id="songCount" min="10" max="50" value="25" class="slider">
+                        <input type="range" id="songCount" min="10" max="30" value="20" step="0.1" class="slider">
                         <div class="slider-thumb"></div>
                     </div>
-                    <span class="slider-max">50</span>
+                    <span class="slider-max">30</span>
                 </div>
             </div>
             
-            <button type="submit">Make My Playlist ⭐</button>
+            <!-- Preferences Toggle -->
+            <div class="preferences-container" style="margin: 25px 0;">
+                <div class="preferences-toggle-wrapper">
+                    <label class="preferences-toggle">
+                        <input type="checkbox" id="usePreferences" checked>
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-text">
+                            <span class="toggle-icon">🎵</span>
+                            Use my Spotify listening history for personalized recommendations
+                        </span>
+                    </label>
+                </div>
+                <p class="preferences-description">
+                    This analyzes your top artists, genres, and listening patterns to create more tailored playlists
+                </p>
+            </div>
+            
+            <button type="submit">Make My Playlist</button>
         </form>
         
         <div class="loading" id="loading">🎵 Analyzing your prompt and crafting the perfect playlist... This may take a moment.</div>
@@ -1367,11 +1601,12 @@ HTML_TEMPLATE = """
         const sliderThumb = document.querySelector('.slider-thumb');
         
         function updateSlider() {
-            const value = songSlider.value;
-            songCountValue.textContent = value;
+            const rawValue = parseFloat(songSlider.value);
+            const intValue = Math.round(rawValue); // Round to nearest integer for display
+            songCountValue.textContent = intValue;
             
-            // Calculate position for slider thumb (0% to 100%)
-            const percentage = ((value - 10) / (50 - 10)) * 100;
+            // Calculate position for slider thumb using the raw float value for smooth positioning
+            const percentage = ((rawValue - 10) / (30 - 10)) * 100;
             sliderThumb.style.left = `${percentage}%`;
         }
         
@@ -1388,12 +1623,13 @@ HTML_TEMPLATE = """
             
             const prompt = document.getElementById('prompt').value;
             const playlistName = document.getElementById('playlistName').value;
-            const songCount = parseInt(document.getElementById('songCount').value) || 25;
+            const songCount = Math.round(parseFloat(document.getElementById('songCount').value)) || 20;
+            const usePreferences = document.getElementById('usePreferences').checked; // Add this line
             const submitButton = document.querySelector('button[type="submit"]');
             
-            // Validate song count
-            if (songCount < 10 || songCount > 50) {
-                alert('Please select a number between 10 and 50 songs');
+            // Validate song count (using the rounded integer value)
+            if (songCount < 10 || songCount > 30) {
+                alert('Please select a number between 10 and 30 songs');
                 return;
             }
             
@@ -1404,7 +1640,7 @@ HTML_TEMPLATE = """
             
             // Disable button and show loading
             submitButton.disabled = true;
-            submitButton.textContent = 'Creating Playlist... 🎵';
+            submitButton.textContent = 'Creating Playlist...';
             document.getElementById('loading').style.display = 'none';
             document.getElementById('result').innerHTML = '';
             
@@ -1418,7 +1654,8 @@ HTML_TEMPLATE = """
                     body: JSON.stringify({ 
                         prompt, 
                         playlist_name: playlistName,
-                        song_count: songCount 
+                        song_count: songCount,
+                        use_preferences: usePreferences // Add this line
                     })
                 });
                 
@@ -1436,7 +1673,7 @@ HTML_TEMPLATE = """
             } finally {
                 // Re-enable button
                 submitButton.disabled = false;
-                submitButton.textContent = 'Make My Playlist ⭐';
+                submitButton.textContent = 'Make My Playlist';
             }
         });
         
@@ -1581,12 +1818,34 @@ HTML_TEMPLATE = """
             const songs = data.songs;
             const playlist = data.playlist;
             
+            // Count personalized songs
+            const personalizedSongs = songs.filter(song => 
+                song.reason && song.reason.toLowerCase().includes('personalized')
+            ).length;
+            
+            // Build preferences section if used
+            let preferencesSection = '';
+            if (analysis.used_preferences && analysis.user_preferences_summary) {
+                const prefs = analysis.user_preferences_summary;
+                preferencesSection = `
+                    <div class="analysis-card">
+                        <h4>🎯 Personalization Applied</h4>
+                        <p><strong>Your Top Artists:</strong> ${prefs.top_artists.map(a => `<span class="tag">${a}</span>`).join('')}</p>
+                        <p><strong>Your Genres:</strong> ${prefs.top_genres.map(g => `<span class="tag">${g}</span>`).join('')}</p>
+                        ${prefs.audio_profile.average_tempo ? `<p><strong>Your Tempo:</strong> ${prefs.audio_profile.average_tempo} BPM</p>` : ''}
+                        ${prefs.audio_profile.valence_score ? `<p><strong>Your Positivity:</strong> ${(prefs.audio_profile.valence_score * 100).toFixed(0)}%</p>` : ''}
+                        ${personalizedSongs > 0 ? `<p><strong>Personalized Picks:</strong> ${personalizedSongs} songs tailored to your taste</p>` : ''}
+                    </div>
+                `;
+            }
+            
             const html = `
                 <div class="result">
                     <div class="playlist-header">
                         <div class="success-icon">🎵</div>
                         <h3 class="success-title">Playlist Created Successfully!</h3>
                         <div class="playlist-name">"${playlist.name}"</div>
+                        ${analysis.used_preferences ? '<p style="color: var(--soft-purple); font-style: italic;">✨ Personalized with your listening history</p>' : ''}
                     </div>
                     
                     <div class="playlist-details">
@@ -1627,6 +1886,8 @@ HTML_TEMPLATE = """
                     </div>
                     
                     <div class="analysis-grid">
+                        ${preferencesSection}
+                        
                         <div class="analysis-card">
                             <h4>🎭 Mood & Emotion</h4>
                             <p><strong>Primary:</strong> ${analysis.primary_mood}</p>
@@ -1680,6 +1941,17 @@ HTML_TEMPLATE = """
                 </div>
             `;
             document.getElementById('result').innerHTML = html;
+            
+            // Smooth scroll to the result section after a brief delay
+            setTimeout(() => {
+                const resultElement = document.getElementById('result');
+                if (resultElement) {
+                    resultElement.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'start' 
+                    });
+                }
+            }, 300); // Small delay to ensure the content is fully rendered
         }
         
         // Check authentication status on page load

@@ -84,6 +84,16 @@ LOGIN_TEMPLATE = """
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
+
+        .logo::before {
+            content: '🎵';
+            background: linear-gradient(135deg, var(--soft-purple), var(--soft-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 2px 4px rgba(163, 136, 199, 0.3));
+            margin-right: 10px;
+        }
         
         .welcome-text {
             font-size: 1.3em;
@@ -123,6 +133,16 @@ LOGIN_TEMPLATE = """
             font-weight: 600;
             text-align: center;
         }
+
+        .features h3::before {
+            content: '✨';
+            background: linear-gradient(135deg, var(--soft-purple), var(--soft-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 2px 4px rgba(163, 136, 199, 0.3));
+            margin-right: 8px;
+        }
         
         .feature-item {
             display: flex;
@@ -135,6 +155,11 @@ LOGIN_TEMPLATE = """
             font-size: 1.5em;
             margin-right: 15px;
             min-width: 30px;
+            background: linear-gradient(135deg, var(--soft-purple), var(--soft-blue), var(--soft-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 2px 4px rgba(163, 136, 199, 0.3));
         }
         
         .spotify-login-btn {
@@ -187,6 +212,16 @@ LOGIN_TEMPLATE = """
         .security-note strong {
             color: var(--medium-text);
         }
+
+        .security-note strong::before {
+            content: '🔒';
+            background: linear-gradient(135deg, var(--soft-purple), var(--soft-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 2px 4px rgba(163, 136, 199, 0.3));
+            margin-right: 6px;
+        }
         
         /* Responsive design */
         @media (max-width: 768px) {
@@ -207,14 +242,14 @@ LOGIN_TEMPLATE = """
 </head>
 <body>
     <div class="login-container">
-        <div class="logo">🎵 Dreamify</div>
+        <div class="logo">Dreamify</div>
         <div class="welcome-text">Transform Dreams into Playlists</div>
         <div class="description">
             Share a dream, quote, mood, or moment from your life, and watch as we craft a personalized playlist that captures its essence. Every emotion deserves its soundtrack—let's create yours.
         </div>
         
         <div class="features">
-            <h3>✨ What You'll Get</h3>
+            <h3>What You'll Get</h3>
             <div class="feature-item">
                 <span class="feature-icon">🌙</span>
                 <span>Turn dreams and emotions into music</span>
@@ -239,7 +274,7 @@ LOGIN_TEMPLATE = """
         </button>
         
         <div class="security-note">
-            <strong>🔒 Secure:</strong> We only access your public profile and playlist creation permissions. Your musical visions remain private.
+            <strong>Secure:</strong> We only access your public profile and playlist creation permissions. Your musical visions remain private.
         </div>
     </div>
 
