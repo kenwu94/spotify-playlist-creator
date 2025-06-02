@@ -34,16 +34,8 @@ app.secret_key = os.getenv('SECRET_KEY', os.getenv('FLASK_SECRET_KEY', 'your-sec
 SPOTIFY_CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID')
 SPOTIFY_CLIENT_SECRET = os.getenv('SPOTIFY_CLIENT_SECRET')
 
-# Dynamic redirect URI - will work for both local and production
-if os.getenv('VERCEL_URL'):
-    # Production on Vercel
-    SPOTIFY_REDIRECT_URI = f"https://{os.getenv('VERCEL_URL')}/callback"
-elif os.getenv('REDIRECT_URI'):
-    # Custom redirect URI from environment
-    SPOTIFY_REDIRECT_URI = os.getenv('REDIRECT_URI')
-else:
-    # Local development
-    SPOTIFY_REDIRECT_URI = 'http://127.0.0.1:5000/callback'
+# Dynamic redirect URI - use environment variable if set, otherwise default to localhost
+SPOTIFY_REDIRECT_URI = os.getenv('SPOTIFY_REDIRECT_URI', 'http://127.0.0.1:5000/callback')
 
 SPOTIFY_SCOPES = 'playlist-modify-public playlist-modify-private user-read-private user-read-email user-top-read user-read-recently-played user-library-read user-follow-read'
 
@@ -86,24 +78,28 @@ def login_page():
 def spotify_callback():
     """Handle Spotify OAuth callback"""
     logging.info("🔗 Processing Spotify OAuth callback")
+    logging.info(f"🔗 Using redirect URI in callback: {SPOTIFY_REDIRECT_URI}")
     
     code = request.args.get('code')
     state = request.args.get('state')
     error = request.args.get('error')
     
+    logging.info(f"📥 Callback params - code: {'Present' if code else 'Missing'}, state: {'Present' if state else 'Missing'}, error: {error}")
+    
     if error:
         logging.error(f"❌ Spotify authorization error: {error}")
-        return redirect(url_for('index'))
+        return redirect(url_for('login_page'))
     
     if not code:
         logging.error("❌ No authorization code received")
-        return redirect(url_for('index'))
+        return redirect(url_for('login_page'))
     
     # Verify state parameter
     session_state = session.get('oauth_state')
+    logging.info(f"🔐 State verification - session: {'Present' if session_state else 'Missing'}, received: {'Present' if state else 'Missing'}")
     if not session_state or state != session_state:
         logging.error("❌ Invalid state parameter")
-        return redirect(url_for('index'))
+        return redirect(url_for('login_page'))
     
     try:
         # Exchange code for token

@@ -420,12 +420,11 @@ HTML_TEMPLATE = """
             0%, 100% { opacity: 1; }
             50% { opacity: 0.6; }
         }
-        
-        /* Cool Loading Animation */
+          /* Cool Loading Animation */
         .playlist-generator {
             display: none;
             text-align: center;
-            margin: 40px 0;
+            margin: 40px auto;
             padding: 40px;
             background: rgba(255, 255, 255, 0.7);
             backdrop-filter: blur(15px);
@@ -437,6 +436,8 @@ HTML_TEMPLATE = """
                 inset 0 1px 0 rgba(255, 255, 255, 0.4);
             position: relative;
             overflow: hidden;
+            max-width: 600px;
+            width: 90%;
         }
         
         .playlist-generator::before {
@@ -772,12 +773,12 @@ HTML_TEMPLATE = """
                 opacity: 0;
             }
         }
-        
-        /* Enhanced responsive design for loading */
+          /* Enhanced responsive design for loading */
         @media (max-width: 768px) {
             .playlist-generator {
                 padding: 25px 20px;
-                margin: 20px 0;
+                margin: 20px auto;
+                width: 95%;
             }
             
             .vinyl-record {
@@ -804,6 +805,16 @@ HTML_TEMPLATE = """
             
             .floating-notes {
                 display: none;
+            }
+            
+            .logout-btn {
+                position: fixed;
+                top: 15px;
+                right: 15px;
+                z-index: 1000;
+                padding: 8px 16px;
+                font-size: 12px;
+                border-radius: 20px;
             }
         }
         

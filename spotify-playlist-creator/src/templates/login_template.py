@@ -2,6 +2,8 @@ LOGIN_TEMPLATE = """
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Dreamify - Login to Spotify</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -222,20 +224,44 @@ LOGIN_TEMPLATE = """
             filter: drop-shadow(0 2px 4px rgba(163, 136, 199, 0.3));
             margin-right: 6px;
         }
-        
-        /* Responsive design */
+          /* Responsive design */
         @media (max-width: 768px) {
+            body {
+                min-height: 100vh;
+                padding: 10px;
+            }
+            
             .login-container {
-                padding: 40px 30px;
-                margin: 10px;
+                padding: 30px 20px;
+                margin: 10px 0;
+                min-height: calc(100vh - 40px);
+                width: 100%;
+                max-width: none;
             }
             
             .logo {
-                font-size: 2.5em;
+                font-size: 2.2em;
+                margin-bottom: 15px;
             }
             
             .welcome-text {
-                font-size: 1.1em;
+                font-size: 1.0em;
+                line-height: 1.5;
+                margin-bottom: 25px;
+            }
+        
+            .login-btn {
+                padding: 18px 35px;
+                font-size: 16px;
+                width: 100%;
+                max-width: 280px;
+            }
+            
+            .security-note {
+                font-size: 0.85em;
+                line-height: 1.4;
+                margin-top: 25px;
+                padding: 15px;
             }
         }
     </style>

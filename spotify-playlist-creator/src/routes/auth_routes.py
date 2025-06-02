@@ -8,13 +8,9 @@ auth_bp = Blueprint('auth', __name__)
 # Spotify OAuth settings
 client_id = os.getenv('SPOTIFY_CLIENT_ID')
 
-# Dynamic redirect URI
-if os.getenv('VERCEL_URL'):
-    redirect_uri = f"https://{os.getenv('VERCEL_URL')}/callback"
-elif os.getenv('SPOTIFY_REDIRECT_URI'):
-    redirect_uri = os.getenv('SPOTIFY_REDIRECT_URI')
-else:
-    redirect_uri = 'http://127.0.0.1:5000/callback'
+# Use the same redirect URI logic as main.py
+redirect_uri = os.getenv('SPOTIFY_REDIRECT_URI', 'http://127.0.0.1:5000/callback')
+print(f"🔗 Using redirect URI: {redirect_uri}")
 
 scopes = 'playlist-modify-public playlist-modify-private user-read-private user-read-email user-top-read user-read-recently-played user-library-read user-follow-read'
 
