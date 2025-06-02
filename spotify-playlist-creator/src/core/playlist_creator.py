@@ -40,7 +40,7 @@ class PlaylistCreator:
         playlist = self.spotify_service.create_playlist(
             user_id="placeholder_user_id",
             playlist_name=playlist_name,
-            description=analysis['playlist_description'],
+            description=user_prompt,
             song_ids=song_ids
         )
         
