@@ -7,12 +7,20 @@ auth_bp = Blueprint('auth', __name__)
 
 # Spotify OAuth settings
 client_id = os.getenv('SPOTIFY_CLIENT_ID')
-redirect_uri = 'http://127.0.0.1:5000/callback'  # Keep this as 127.0.0.1 since that's what you have in Spotify
+
+# Dynamic redirect URI
+if os.getenv('VERCEL_URL'):
+    redirect_uri = f"https://{os.getenv('VERCEL_URL')}/callback"
+elif os.getenv('REDIRECT_URI'):
+    redirect_uri = os.getenv('REDIRECT_URI')
+else:
+    redirect_uri = 'http://127.0.0.1:5000/callback'
+
 scopes = 'playlist-modify-public playlist-modify-private user-read-private user-read-email user-top-read user-read-recently-played user-library-read user-follow-read'
 
 @auth_bp.route('/login')
 def login():
-    """Redirect user to Spotify authorization using the working logic"""
+    """Redirect user to Spotify authorization"""
     state = secrets.token_urlsafe(16)
     
     # Store the state in session for verification in callback
@@ -27,20 +35,18 @@ def login():
         'show_dialog': 'true'
     }
     url = 'https://accounts.spotify.com/authorize?' + urllib.parse.urlencode(params)
-    print(f"🔗 Redirecting to: {url}")
-    print(f"🔑 Generated state: {state}")
     return redirect(url)
 
 @auth_bp.route('/logout')
 def logout():
-    """Clear session and redirect to home"""
+    """Clear session and redirect to login page"""
     session.clear()
-    return redirect(url_for('index'))  # Changed from 'login' to 'index'
+    return redirect(url_for('login_page'))  # Changed from 'index' to 'login_page'
 
 @auth_bp.route('/user-info')
 def user_info():
     """Get current user info"""
-    if not session.get('spotify_token'):  # Changed to check for token instead
+    if not session.get('spotify_token'):
         return jsonify({'error': 'Not authenticated'}), 401
     
     return jsonify(session.get('user_info', {}))

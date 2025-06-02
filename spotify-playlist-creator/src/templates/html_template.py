@@ -1,7 +1,9 @@
 HTML_TEMPLATE = """
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Spotify Playlist Creator</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -444,7 +446,7 @@ HTML_TEMPLATE = """
             left: -50%;
             width: 200%;
             height: 200%;
-            background: linear-gradient(45deg, transparent, rgba(163, 136, 199, 0.1), transparent);
+            background: linear-gradient(45deg, transparent, rgba(163, 136, 199, 0.05), transparent);
             animation: shimmer 3s ease-in-out infinite;
             transform: rotate(45deg);
         }
@@ -674,11 +676,11 @@ HTML_TEMPLATE = """
         @keyframes iconPulse {
             0%, 100% { 
                 transform: scale(1.2);
-                filter: drop-shadow(0 0 12px rgba(163, 136, 199, 0.6));
+                filter: drop-shadow(0 2px 4px rgba(163, 136, 199, 0.3));
             }
             50% { 
                 transform: scale(1.4);
-                filter: drop-shadow(0 0 20px rgba(163, 136, 199, 0.8));
+                filter: drop-shadow(0 4px 8px rgba(163, 136, 199, 0.5));
             }
         }
         
@@ -905,20 +907,34 @@ HTML_TEMPLATE = """
         }
         
         .logout-btn {
-            background: transparent;
-            color: var(--soft-purple);
-            border: 2px solid var(--soft-purple);
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
             padding: 10px 20px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 16px;
+            border: none;
+            border-radius: 25px;
+            text-decoration: none;
             font-weight: 500;
+            font-size: 14px;
             transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
         
         .logout-btn:hover {
-            background: var(--soft-purple);
+            background: linear-gradient(135deg, #764ba2, #667eea);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            text-decoration: none;
             color: white;
+        }
+
+        .logout-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
         }
         
         /* Custom Slider Styles */
@@ -1325,30 +1341,62 @@ HTML_TEMPLATE = """
         
         /* Preferences Toggle Styles */
         .preferences-container {
-            background: rgba(247, 245, 237, 0.4);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            padding: 20px;
-            border-radius: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: linear-gradient(135deg, rgba(163, 136, 199, 0.08), rgba(123, 184, 217, 0.08));
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            padding: 25px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 
+                0 8px 25px rgba(0, 0, 0, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
             transition: all 0.3s ease;
-            text-align: center; /* Center the content */
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .preferences-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(163, 136, 199, 0.05), transparent);
+            animation: shimmer 4s ease-in-out infinite;
+            transform: rotate(45deg);
         }
         
         .preferences-toggle-wrapper {
             display: flex;
-            justify-content: center; /* Center the toggle */
-            margin-bottom: 10px;
+            justify-content: center;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 2;
         }
         
         .preferences-toggle {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 20px;
             cursor: pointer;
-            font-size: 1em;
-            font-weight: 500;
+            font-size: 1.1em;
+            font-weight: 600;
             color: var(--dark-text);
+            padding: 15px 25px;
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .preferences-toggle:hover {
+            background: rgba(255, 255, 255, 0.8);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(163, 136, 199, 0.15);
         }
         
         .preferences-toggle input[type="checkbox"] {
@@ -1357,161 +1405,153 @@ HTML_TEMPLATE = """
         
         .toggle-slider {
             position: relative;
-            width: 50px;
-            height: 26px;
-            background: rgba(163, 136, 199, 0.3);
-            border-radius: 13px;
-            transition: all 0.3s ease;
+            width: 60px;
+            height: 32px;
+            background: rgba(163, 136, 199, 0.2);
+            border-radius: 16px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             flex-shrink: 0;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
         }
         
         .toggle-slider::before {
             content: '';
             position: absolute;
-            top: 3px;
-            left: 3px;
-            width: 20px;
-            height: 20px;
-            background: white;
+            top: 2px;
+            left: 2px;
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, #ffffff, #f8f9fa);
             border-radius: 50%;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 
+                0 2px 8px rgba(0, 0, 0, 0.15),
+                0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(163, 136, 199, 0.1);
         }
         
         .preferences-toggle input:checked + .toggle-slider {
             background: linear-gradient(135deg, var(--soft-purple), var(--soft-blue));
+            border-color: rgba(255, 255, 255, 0.5);
+            box-shadow: 
+                inset 0 2px 4px rgba(0, 0, 0, 0.1),
+                0 0 20px rgba(163, 136, 199, 0.3);
         }
         
         .preferences-toggle input:checked + .toggle-slider::before {
-            transform: translateX(24px);
+            transform: translateX(28px);
+            background: linear-gradient(135deg, #ffffff, #f0f8ff);
+            box-shadow: 
+                0 3px 12px rgba(0, 0, 0, 0.2),
+                0 1px 4px rgba(0, 0, 0, 0.1);
         }
         
         .toggle-text {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 12px;
             flex: 1;
         }
         
         .toggle-icon {
-            font-size: 1.2em;
-            filter: drop-shadow(0 2px 4px rgba(163, 136, 199, 0.3));
-        }
-        
-        .preferences-description {
-            margin-top: 10px;
-            font-size: 0.9em;
-            color: var(--light-text);
-            font-style: italic;
-            line-height: 1.4;
-            text-align: center; /* Center the description */
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        
-        .preferences-container:hover {
-            background: rgba(247, 245, 237, 0.6);
-            transform: translateY(-1px);
-        }
-
-        /* Fix loading animation centering */
-        .generator-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(247, 245, 237, 0.95);
-            backdrop-filter: blur(10px);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            text-align: center; /* Ensure text is centered */
-        }
-        
-        .generator-box {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(20px);
-            padding: 40px;
-            border-radius: 20px;
-            border: 2px solid rgba(163, 136, 199, 0.3);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            max-width: 90vw;
-            width: 400px;
-            text-align: center;
-            animation: gentleFloat 3s ease-in-out infinite;
-        }
-        
-        .generator-title {
-            font-size: 1.8em;
-            font-weight: bold;
-            margin-bottom: 20px;
+            font-size: 1.4em;
             background: linear-gradient(135deg, var(--soft-purple), var(--soft-blue));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            text-align: center; /* Ensure title is centered */
+            filter: drop-shadow(0 2px 4px rgba(163, 136, 199, 0.3));
+            animation: iconPulse 3s ease-in-out infinite;
         }
         
-        .step-indicator {
-            display: flex;
-            justify-content: center; /* Center the step indicators */
-            align-items: center;
-            gap: 15px;
-            margin: 20px 0;
-            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+        @keyframes iconPulse {
+            0%, 100% { 
+                transform: scale(1);
+                filter: drop-shadow(0 2px 4px rgba(163, 136, 199, 0.3));
+            }
+            50% { 
+                transform: scale(1.1);
+                filter: drop-shadow(0 4px 8px rgba(163, 136, 199, 0.5));
+            }
         }
         
-        .step {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 12px;
-            border-radius: 20px;
-            font-size: 0.9em;
-            transition: all 0.3s ease;
-            white-space: nowrap; /* Prevent text wrapping */
+        .preferences-description {
+            margin-top: 15px;
+            font-size: 0.95em;
+            color: var(--medium-text);
+            font-style: italic;
+            line-height: 1.5;
+            text-align: center;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            position: relative;
+            z-index: 2;
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(5px);
+            padding: 12px 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
         
-        .progress-text {
-            font-size: 1.1em;
-            color: var(--dark-text);
-            margin: 15px 0;
-            text-align: center; /* Center progress text */
+        .preferences-description::before {
+            content: '💡';
+            margin-right: 8px;
+            font-style: normal;
+            opacity: 0.8;
+        }
+        
+        .preferences-container:hover {
+            background: linear-gradient(135deg, rgba(163, 136, 199, 0.12), rgba(123, 184, 217, 0.12));
+            transform: translateY(-2px);
+            box-shadow: 
+                0 12px 35px rgba(0, 0, 0, 0.12),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        }
+        
+        /* Add a subtle glow effect when toggle is active */
+        .preferences-toggle input:checked ~ .toggle-text .toggle-icon {
+            animation: iconGlow 2s ease-in-out infinite;
+        }
+        
+        @keyframes iconGlow {
+            0%, 100% { 
+                filter: drop-shadow(0 2px 4px rgba(163, 136, 199, 0.3));
+            }
+            50% { 
+                filter: drop-shadow(0 4px 12px rgba(163, 136, 199, 0.6));
+            }
         }
         
         /* Responsive adjustments */
         @media (max-width: 768px) {
             .preferences-toggle {
                 flex-direction: column;
-                gap: 10px;
+                gap: 15px;
                 text-align: center;
+                padding: 20px;
             }
             
             .toggle-text {
                 justify-content: center;
+                order: -1;
             }
             
-            .generator-box {
-                padding: 30px 20px;
-                width: 350px;
+            .preferences-description {
+                font-size: 0.9em;
+                padding: 10px 15px;
             }
             
-            .step-indicator {
-                gap: 10px;
-            }
-            
-            .step {
-                font-size: 0.8em;
-                padding: 6px 10px;
+            .preferences-container {
+                padding: 20px;
             }
         }
     </style>
 </head>
 <body>
+    <!-- Add logout button at the top -->
+    <a href="/auth/logout" class="logout-btn">Logout</a>
+    
     <div class="container">
         <h1>
             <span class="music-emoji">🎵</span>
@@ -1572,26 +1612,6 @@ HTML_TEMPLATE = """
         
         <div class="loading" id="loading">🎵 Analyzing your prompt and crafting the perfect playlist... This may take a moment.</div>
         <div id="result"></div>
-        
-        <!-- Authentication sections -->
-        <div id="login-section" class="auth-section" style="display: none;">
-            <div class="login-prompt">
-                <h3>🌙 Transform Dreams into Playlists</h3>
-                <p>Share a dream, quote, mood, or moment from your life, and watch as we craft a personalized playlist that captures its essence. Every emotion deserves its soundtrack—let's create yours.</p>
-                <p style="font-style: italic; color: var(--light-text); margin-top: 15px;">Connect with Spotify to bring your musical visions to life and save them to your library.</p>
-                <button onclick="loginToSpotify()" class="spotify-btn">
-                    ✨ Connect & Create
-                </button>
-            </div>
-        </div>
-        
-        <div id="user-section" class="auth-section" style="display: none;">
-            <div class="user-info">
-                <img id="user-avatar" src="" alt="User" style="width: 40px; height: 40px; border-radius: 50%; margin-right: 10px;">
-                <span id="user-name" style="margin-right: 15px;"></span>
-                <button onclick="logout()" class="logout-btn">Logout</button>
-            </div>
-        </div>
     </div>
 
     <script>
@@ -1624,7 +1644,7 @@ HTML_TEMPLATE = """
             const prompt = document.getElementById('prompt').value;
             const playlistName = document.getElementById('playlistName').value;
             const songCount = Math.round(parseFloat(document.getElementById('songCount').value)) || 20;
-            const usePreferences = document.getElementById('usePreferences').checked; // Add this line
+            const usePreferences = document.getElementById('usePreferences').checked;
             const submitButton = document.querySelector('button[type="submit"]');
             
             // Validate song count (using the rounded integer value)
@@ -1647,6 +1667,17 @@ HTML_TEMPLATE = """
             // Show cool animation
             showPlaylistGenerator();
             
+            // Auto-scroll to the loading animation after a brief delay
+            setTimeout(() => {
+                const generatorElement = document.getElementById('playlistGenerator');
+                if (generatorElement) {
+                    generatorElement.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'center' // Center the loader in the viewport
+                    });
+                }
+            }, 200); // Small delay to ensure the loader is rendered
+            
             try {
                 const response = await fetch('/create-playlist', {
                     method: 'POST',
@@ -1655,7 +1686,7 @@ HTML_TEMPLATE = """
                         prompt, 
                         playlist_name: playlistName,
                         song_count: songCount,
-                        use_preferences: usePreferences // Add this line
+                        use_preferences: usePreferences
                     })
                 });
                 
@@ -1664,12 +1695,32 @@ HTML_TEMPLATE = """
                 
                 if (data.error) {
                     document.getElementById('result').innerHTML = `<div style="color: red;">Error: ${data.error}</div>`;
+                    // Scroll to error message
+                    setTimeout(() => {
+                        const resultElement = document.getElementById('result');
+                        if (resultElement) {
+                            resultElement.scrollIntoView({ 
+                                behavior: 'smooth', 
+                                block: 'center' 
+                            });
+                        }
+                    }, 100);
                 } else {
                     displayResult(data);
                 }
             } catch (error) {
                 hidePlaylistGenerator();
                 document.getElementById('result').innerHTML = `<div style="color: red;">Error: ${error.message}</div>`;
+                // Scroll to error message
+                setTimeout(() => {
+                    const resultElement = document.getElementById('result');
+                    if (resultElement) {
+                        resultElement.scrollIntoView({ 
+                            behavior: 'smooth', 
+                            block: 'center' 
+                        });
+                    }
+                }, 100);
             } finally {
                 // Re-enable button
                 submitButton.disabled = false;
@@ -1860,7 +1911,7 @@ HTML_TEMPLATE = """
                         <div class="detail-card">
                             <div class="detail-icon">🎶</div>
                             <div class="detail-content">
-                                <span class="detail-label">Songs Found</span>
+                                                               <span class="detail-label">Songs Found</span>
                                 <span class="detail-value">${songs.length} tracks</span>
                             </div>
                         </div>
@@ -1942,18 +1993,18 @@ HTML_TEMPLATE = """
             `;
             document.getElementById('result').innerHTML = html;
             
-            // Smooth scroll to the result section after a brief delay
+            // Smooth scroll to the result section after a brief delay to ensure rendering
             setTimeout(() => {
                 const resultElement = document.getElementById('result');
                 if (resultElement) {
                     resultElement.scrollIntoView({ 
                         behavior: 'smooth', 
-                        block: 'start' 
+                        block: 'start' // Start at the top of the results
                     });
                 }
             }, 300); // Small delay to ensure the content is fully rendered
         }
-        
+
         // Check authentication status on page load
         window.onload = function() {
             checkAuthStatus();
@@ -2014,9 +2065,26 @@ HTML_TEMPLATE = """
                 alert('Please login to Spotify first to create playlists!');
                 return;
             }
-            
             // ...rest of playlist creation code...
         }
+
+        async function loadUserInfo() {
+            try {
+                const response = await fetch('/auth/user-info');
+                if (response.ok) {
+                    const data = await response.json();
+                    showUserSection(data);
+                } else {
+                    showLoginSection();
+                }
+            } catch (error) {
+                console.error('Failed to load user info:', error);
+                showLoginSection();
+            }
+        }
+
+        // Call this when the page loads
+        document.addEventListener('DOMContentLoaded', loadUserInfo);
     </script>
 </body>
 </html>
