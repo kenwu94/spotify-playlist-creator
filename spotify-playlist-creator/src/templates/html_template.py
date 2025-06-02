@@ -659,11 +659,10 @@ HTML_TEMPLATE = """
             filter: drop-shadow(0 0 12px rgba(163, 136, 199, 0.6));
             transform: scale(1.2);
         }
-        
-        .loading-step.completed {
+          .loading-step.completed {
             opacity: 0.9;
             color: var(--soft-green);
-            transform: translateX(20px) scale(0.95);
+            transform: translateX(0) scale(0.95);
             background: rgba(133, 196, 181, 0.1);
             border-color: rgba(133, 196, 181, 0.3);
         }
