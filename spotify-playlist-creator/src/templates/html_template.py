@@ -34,13 +34,14 @@ HTML_TEMPLATE = """
         body { 
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
             background: linear-gradient(135deg, var(--pastel-pink) 0%, var(--pastel-lavender) 25%, var(--pastel-blue) 50%, var(--pastel-mint) 75%, var(--pastel-peach) 100%);
-            background-size: 400% 400%;
-            animation: gradientShift 15s ease infinite;
+            background-size: 200% 200%; /* Reduced from 400% */
+            animation: gradientShift 30s ease infinite; /* Slowed down from 15s */
             min-height: 100vh;
             padding: 20px;
             color: var(--dark-text);
         }
         
+        /* Optimize the main background gradient - reduce frequency */
         @keyframes gradientShift {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
@@ -50,13 +51,12 @@ HTML_TEMPLATE = """
         .container { 
             max-width: 900px;
             margin: 0 auto;
-            background: rgba(255, 255, 255, 0.75);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
+            background: rgba(255, 255, 255, 0.85); /* Increased opacity */
+            backdrop-filter: blur(10px); /* Reduced from 25px */
+            -webkit-backdrop-filter: blur(10px);
             padding: 50px;
             border-radius: 25px;
-            box-shadow: 
-                0 25px 50px rgba(0, 0, 0, 0.15),
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15),
                 inset 0 1px 0 rgba(255, 255, 255, 0.5);
             border: 1px solid rgba(255, 255, 255, 0.25);
             position: relative;
@@ -87,14 +87,30 @@ HTML_TEMPLATE = """
         
         .dreamify-letter {
             display: inline-block;
-            animation: letterFloat 3s ease-in-out infinite;
-            background: linear-gradient(135deg, #d4a5c4, #c4a5d4, #a5c4d4, #a5d4c4, #d4c4a5);
+            animation: letterFloat 4s ease-in-out infinite; /* Slowed down */
+            background: linear-gradient(135deg, #d4a5c4, #c4a5d4, #a5c4d4);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            text-shadow: 0 2px 15px rgba(212, 165, 196, 0.5);
+            will-change: transform; /* Optimize for animations */
             transition: all 0.3s ease;
             font-family: 'Times New Roman', Times, serif;
+        }
+        
+        /* Optimize letter animations - use transform only */
+        @keyframes letterFloat {
+            0%, 100% { 
+                transform: translateY(0px);
+            }
+            25% { 
+                transform: translateY(-4px); /* Reduced movement */
+            }
+            50% { 
+                transform: translateY(-8px); /* Reduced movement */
+            }
+            75% { 
+                transform: translateY(-2px); /* Reduced movement */
+            }
         }
         
         .dreamify-letter:nth-child(2) { animation-delay: 0s; }
@@ -110,25 +126,6 @@ HTML_TEMPLATE = """
         .dreamify-letter:hover {
             transform: scale(1.2) rotate(5deg);
             text-shadow: 0 4px 25px rgba(212, 165, 196, 0.8);
-        }
-        
-        @keyframes letterFloat {
-            0%, 100% { 
-                transform: translateY(0px) rotate(0deg);
-                text-shadow: 0 2px 15px rgba(212, 165, 196, 0.5);
-            }
-            25% { 
-                transform: translateY(-8px) rotate(2deg);
-                text-shadow: 0 6px 20px rgba(196, 165, 212, 0.7);
-            }
-            50% { 
-                transform: translateY(-12px) rotate(-1deg);
-                text-shadow: 0 8px 25px rgba(165, 196, 212, 0.8);
-            }
-            75% { 
-                transform: translateY(-6px) rotate(1deg);
-                text-shadow: 0 6px 20px rgba(165, 212, 196, 0.7);
-            }
         }
         
         .music-emoji {
@@ -454,32 +451,23 @@ HTML_TEMPLATE = """
         
         .note {
             position: absolute;
-            font-size: 1.5em;
-            opacity: 0.3;
-            animation: floatNote 4s ease-in-out infinite;
+            font-size: 1.2em; /* Reduced size */
+            opacity: 0.2; /* Reduced default opacity */
+            animation: floatNote 6s ease-in-out infinite; /* Slowed down */
             color: var(--soft-purple);
+            will-change: transform, opacity;
         }
         
-        .note:nth-child(1) { left: 10%; animation-delay: 0s; }
-        .note:nth-child(2) { left: 20%; animation-delay: 0.5s; }
-        .note:nth-child(3) { left: 30%; animation-delay: 1s; }
-        .note:nth-child(4) { left: 70%; animation-delay: 1.5s; }
-        .note:nth-child(5) { left: 80%; animation-delay: 2s; }
-        .note:nth-child(6) { left: 90%; animation-delay: 2.5s; }
-        .note:nth-child(7) { left: 15%; animation-delay: 3s; }
-        .note:nth-child(8) { left: 85%; animation-delay: 3.5s; }
-        
+        /* Simplify floating notes */
         @keyframes floatNote {
             0%, 100% { 
-                transform: translateY(100px) rotate(0deg);
+                transform: translateY(60px);
                 opacity: 0;
             }
-            10% { opacity: 0.3; }
             50% { 
-                transform: translateY(-20px) rotate(180deg);
-                opacity: 0.6;
+                transform: translateY(-10px);
+                opacity: 0.4; /* Reduced opacity */
             }
-            90% { opacity: 0.3; }
         }
         
         .vinyl-record {
@@ -495,9 +483,15 @@ HTML_TEMPLATE = """
                 inset 0 0 0 4px rgba(255, 255, 255, 0.2),
                 inset 0 0 0 6px var(--soft-purple),
                 inset 0 0 0 8px rgba(255, 255, 255, 0.3);
-            animation: vinylSpin 4s linear infinite;
+            animation: vinylSpin 8s linear infinite; /* Slowed down from 4s */
             z-index: 2;
             opacity: 0.7;
+        }
+        
+        /* Optimize vinyl record animation */
+        @keyframes vinylSpin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
         
         .vinyl-record::before {
@@ -530,11 +524,6 @@ HTML_TEMPLATE = """
             100% { transform: translate(-50%, -50%) scale(1.1); }
         }
         
-        @keyframes vinylSpin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        
         .music-visualizer {
             display: flex;
             justify-content: center;
@@ -548,11 +537,24 @@ HTML_TEMPLATE = """
         
         .bar {
             width: 6px;
-            background: linear-gradient(to top, var(--soft-purple), var(--soft-blue), var(--soft-green));
+            background: linear-gradient(to top, var(--soft-purple), var(--soft-blue));
             border-radius: 3px;
-            animation: musicBars 1.2s ease-in-out infinite;
+            animation: musicBars 2s ease-in-out infinite; /* Slowed down */
             transform-origin: bottom;
+            will-change: transform; /* Optimize for animations */
             box-shadow: 0 0 10px rgba(163, 136, 199, 0.4);
+        }
+        
+        /* Optimize music bars - use scale instead of height changes */
+        @keyframes musicBars {
+            0%, 100% { 
+                transform: scaleY(0.3);
+                opacity: 0.6;
+            }
+            50% { 
+                transform: scaleY(1);
+                opacity: 1;
+            }
         }
         
         .bar:nth-child(1) { animation-delay: 0s; height: 25px; }
@@ -567,19 +569,6 @@ HTML_TEMPLATE = """
         .bar:nth-child(10) { animation-delay: 0.9s; height: 30px; }
         .bar:nth-child(11) { animation-delay: 1.0s; height: 50px; }
         .bar:nth-child(12) { animation-delay: 1.1s; height: 40px; }
-        
-        @keyframes musicBars {
-            0%, 100% { 
-                transform: scaleY(0.2);
-                opacity: 0.5;
-                box-shadow: 0 0 5px rgba(163, 136, 199, 0.2);
-            }
-            50% { 
-                transform: scaleY(1);
-                opacity: 1;
-                box-shadow: 0 0 15px rgba(163, 136, 199, 0.6);
-            }
-        }
         
         .loading-text {
             font-size: 1.6em;
@@ -1179,9 +1168,37 @@ HTML_TEMPLATE = """
                 0 8px 25px rgba(0, 0, 0, 0.08),
                 inset 0 1px 0 rgba(255, 255, 255, 0.5);
             display: flex;
-            align-items: center;
+            flex-direction: column; /* Stack items vertically */
+            align-items: center; /* Center horizontally */
+            justify-content: center; /* Center vertically */
             gap: 15px;
             transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        .detail-content, .link-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            align-items: center; /* Changed from flex-start to center */
+            text-align: center; /* Add this to center text content */
+        }
+        
+        .playlist-link-card .link-icon {
+            font-size: 1.8em;
+            background: linear-gradient(135deg, var(--soft-purple), var(--soft-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .playlist-link-card .link-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            text-align: center; /* Ensure text is centered */
         }
         
         .detail-card:hover, .playlist-link-card:hover {
@@ -1196,13 +1213,6 @@ HTML_TEMPLATE = """
             -webkit-text-fill-color: transparent;
             background-clip: text;
             min-width: 40px;
-        }
-        
-        .detail-content, .link-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
         }
         
         .detail-label, .link-label {
