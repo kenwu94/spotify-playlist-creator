@@ -33,10 +33,20 @@ app.secret_key = os.getenv('SECRET_KEY', os.getenv('FLASK_SECRET_KEY', 'your-sec
 # Configure session for production
 # Only use secure cookies in production (HTTPS)
 is_production = os.getenv('ENVIRONMENT') == 'production' or os.getenv('VERCEL') == '1'
+logging.info(f"🔍 Production mode: {is_production}")
+logging.info(f"🔍 Environment: {os.getenv('ENVIRONMENT')}")
+logging.info(f"🔍 Vercel: {os.getenv('VERCEL')}")
+
 app.config['SESSION_COOKIE_SECURE'] = is_production
 app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent XSS
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # CSRF protection
 app.config['PERMANENT_SESSION_LIFETIME'] = 3600  # 1 hour
+app.config['SESSION_COOKIE_DOMAIN'] = None  # Allow subdomains
+
+# Additional session configuration for Vercel
+if is_production:
+    app.config['SESSION_COOKIE_NAME'] = 'dreamify_session'
+    app.config['SESSION_COOKIE_PATH'] = '/'
 
 # Spotify OAuth settings - Updated for production
 SPOTIFY_CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID')
@@ -166,10 +176,10 @@ def spotify_callback():
         logging.error("❌ Invalid state parameter")
         return redirect(url_for('login_page'))
     
-    try:
-        # Exchange code for token
+    try:        # Exchange code for token
         token_url = 'https://accounts.spotify.com/api/token'
-        token_data = {        'grant_type': 'authorization_code',
+        token_data = {
+            'grant_type': 'authorization_code',
             'code': code,
             'redirect_uri': SPOTIFY_REDIRECT_URI,
             'client_id': SPOTIFY_CLIENT_ID,
@@ -189,24 +199,26 @@ def spotify_callback():
             
             logging.info(f"✅ Token exchange successful")
             logging.info(f"🔍 Token scopes: {token_info.get('scope', 'No scopes returned')}")
-            
-            # Make session permanent for better persistence
+              # Make session permanent for better persistence
             session.permanent = True
-              # Store tokens in session
+            
+            # Store tokens in session
             session['spotify_token'] = token_info['access_token']
             session['spotify_refresh_token'] = token_info.get('refresh_token')
             session['spotify_token_expires'] = int(time.time()) + token_info.get('expires_in', 3600)
-              # Get user info
+            
+            # Get user info
             user_info = get_user_info(token_info['access_token'])
             if user_info:
                 session['user_info'] = user_info
                 session.pop('oauth_state', None)
-                
-                # Force session commit
+                  # Force session commit
                 session.modified = True
                 
                 logging.info(f"✅ User authenticated: {user_info.get('display_name')}")
                 logging.info(f"🔍 Session keys after login: {list(session.keys())}")
+                logging.info(f"🔍 Session token stored: {'spotify_token' in session}")
+                logging.info(f"🔍 Session user_info stored: {'user_info' in session}")
                 
                 # Add ?from=login parameter to trigger proper post-login handling
                 return redirect(url_for('index') + '?from=login')
@@ -256,6 +268,13 @@ def api_user():
     logging.info(f"🔍 Session keys: {list(session.keys())}")
     logging.info(f"🔍 Has spotify_token: {'spotify_token' in session}")
     logging.info(f"🔍 Has user_info: {'user_info' in session}")
+    logging.info(f"🔍 Session ID: {session.get('_permanent', 'Not permanent')}")
+    
+    # Add detailed session debugging
+    if 'spotify_token' in session:
+        token_expires = session.get('spotify_token_expires', 0)
+        current_time = int(time.time())
+        logging.info(f"🔍 Token expires: {token_expires}, Current time: {current_time}, Valid: {token_expires > current_time}")
     
     if not require_auth():
         logging.warning("❌ Authentication failed in /api/user")
@@ -281,6 +300,27 @@ def health():
         'timestamp': datetime.now().isoformat(),
         'redirect_uri': SPOTIFY_REDIRECT_URI
     }), 200
+
+@app.route('/debug/session')
+def debug_session():
+    """Debug endpoint to check session state"""
+    session_data = {
+        'session_keys': list(session.keys()),
+        'has_spotify_token': 'spotify_token' in session,
+        'has_user_info': 'user_info' in session,
+        'has_refresh_token': 'spotify_refresh_token' in session,
+        'session_permanent': session.permanent,
+        'environment': os.getenv('ENVIRONMENT'),
+        'vercel': os.getenv('VERCEL'),
+        'is_production': is_production
+    }
+    
+    if 'spotify_token_expires' in session:
+        session_data['token_expires'] = session['spotify_token_expires']
+        session_data['current_time'] = int(time.time())
+        session_data['token_valid'] = session['spotify_token_expires'] > int(time.time())
+    
+    return jsonify(session_data)
 
 @app.errorhandler(429)
 def rate_limit_exceeded(error):
