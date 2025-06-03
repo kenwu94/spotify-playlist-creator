@@ -1959,80 +1959,120 @@ HTML_TEMPLATE = """
                     });
                 }
             }, 300); // Small delay to ensure the content is fully rendered
-        }
-
-        // Check authentication status on page load
-        window.onload = function() {
-            checkAuthStatus();
-        };
-
-        function checkAuthStatus() {
-            fetch('/auth/user-info')
-                .then(response => {
-                    if (response.ok) {
-                        return response.json();
-                    } else {
-                        throw new Error('Not authenticated');
-                    }
-                })
-                .then(user => {
-                    showUserSection(user);
-                })
-                .catch(() => {
-                    showLoginSection();
-                });
         }        function showLoginSection() {
             // Redirect to login page instead of showing login section on main page
             window.location.href = '/login';
-        }        function showUserSection(user) {
+        }
+
+        function showUserSection(user) {
             document.getElementById('user-section').style.display = 'block';
             
             // Enable the form
             document.getElementById('playlistForm').style.opacity = '1';
             document.getElementById('playlistForm').style.pointerEvents = 'auto';
-            
-            // Update user info
+              // Update user info
             const userName = document.getElementById('user-name');
             const userAvatar = document.getElementById('user-avatar');
             
             if (userName) {
-                userName.textContent = user.display_name || 'User';
+                userName.textContent = user.name || 'User';
             }
             
-            if (userAvatar && user.images && user.images.length > 0) {
-                userAvatar.src = user.images[0].url;
+            if (userAvatar && user.image) {
+                userAvatar.src = user.image;
                 userAvatar.style.display = 'block';
-            }
-        }        function logout() {
-            window.location.href = '/auth/logout';
-        }async function createPlaylist() {
-            // Check if user is authenticated
-            const authResponse = await fetch('/auth/user-info');
-            if (!authResponse.ok) {
-                // Redirect to login page instead of showing alert
-                window.location.href = '/login';
-                return;
-            }
-            // ...rest of playlist creation code...
-        }        async function loadUserInfo() {
-            try {
-                const response = await fetch('/auth/user-info');
-                if (response.ok) {
-                    const data = await response.json();
-                    showUserSection(data);
-                } else {
-                    // Redirect to login page instead of showing login section
-                    window.location.href = '/login';
-                }
-            } catch (error) {
-                console.error('Failed to load user info:', error);
-                // Redirect to login page instead of showing login section
-                window.location.href = '/login';
             }
         }
 
-        // Call this when the page loads
-        document.addEventListener('DOMContentLoaded', loadUserInfo);
+        function logout() {
+            window.location.href = '/auth/logout';
+        }        async function createPlaylist() {
+            // Check if user is authenticated with better error handling
+            try {
+                const authResponse = await fetch('/api/user', {
+                    credentials: 'same-origin',
+                    cache: 'no-cache'
+                });
+                
+                if (!authResponse.ok) {
+                    if (authResponse.status === 401) {
+                        console.log('User not authenticated for playlist creation, redirecting to login');
+                        window.location.href = '/login';
+                        return;
+                    } else {
+                        showError('Authentication check failed. Please try refreshing the page.');
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.error('Auth check failed:', error);
+                showError('Unable to verify authentication. Please check your connection and try again.');
+                return;
+            }
+            // ...rest of playlist creation code...
+        }async function loadUserInfo() {
+            // Prevent multiple simultaneous auth checks
+            if (window.authCheckInProgress) {
+                console.log('Auth check already in progress, skipping...');
+                return;
+            }
+            
+            window.authCheckInProgress = true;
+            
+            try {
+                console.log('Loading user info...');
+                const response = await fetch('/api/user', {
+                    credentials: 'same-origin', // Ensure cookies are sent
+                    cache: 'no-cache' // Prevent caching of auth state
+                });
+                console.log('Auth response status:', response.status);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('User authenticated:', data.user.name);
+                    showUserSection(data.user);
+                } else if (response.status === 401) {
+                    console.log('User not authenticated (401), redirecting to login');
+                    // Only redirect if we're not already on the login page
+                    if (!window.location.pathname.includes('/login')) {
+                        setTimeout(() => {
+                            window.location.href = '/login';
+                        }, 1000);
+                    }
+                } else {
+                    console.log('Unexpected auth response:', response.status);
+                    // For other errors, show user section with limited functionality
+                    showUserSection({ name: 'User', image: '' });
+                }
+            } catch (error) {
+                console.error('Failed to load user info:', error);
+                // Only redirect on network errors if we're not already on login page
+                if (!window.location.pathname.includes('/login')) {
+                    setTimeout(() => {
+                        window.location.href = '/login';
+                    }, 1000);
+                }
+            } finally {
+                window.authCheckInProgress = false;
+            }
+        }        // Call this when the page loads - only once
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if we just came from a login redirect
+            const urlParams = new URLSearchParams(window.location.search);
+            const fromLogin = urlParams.get('from') === 'login';
+            
+            if (fromLogin) {
+                // Remove the parameter from URL
+                const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+                window.history.replaceState({}, document.title, newUrl);
+                
+                // Give extra time for session to be established
+                setTimeout(loadUserInfo, 2000);
+            } else {
+                // Normal page load
+                loadUserInfo();
+            }
+        });
     </script>
 </body>
 </html>

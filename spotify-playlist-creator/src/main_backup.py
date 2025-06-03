@@ -31,9 +31,7 @@ app = Flask(__name__, static_folder='resources', static_url_path='/static')
 app.secret_key = os.getenv('SECRET_KEY', os.getenv('FLASK_SECRET_KEY', 'your-secret-key-here'))
 
 # Configure session for production
-# Only use secure cookies in production (HTTPS)
-is_production = os.getenv('ENVIRONMENT') == 'production' or os.getenv('VERCEL') == '1'
-app.config['SESSION_COOKIE_SECURE'] = is_production
+app.config['SESSION_COOKIE_SECURE'] = True  # Use HTTPS
 app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent XSS
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # CSRF protection
 app.config['PERMANENT_SESSION_LIFETIME'] = 3600  # 1 hour
@@ -153,8 +151,7 @@ def spotify_callback():
     if not code:
         logging.error("❌ No authorization code received")
         return redirect(url_for('login_page'))
-    
-    # Verify state parameter
+      # Verify state parameter
     session_state = session.get('oauth_state')
     logging.info(f"🔐 State verification - session: {'Present' if session_state else 'Missing'}, received: {'Present' if state else 'Missing'}")
     if not session_state or state != session_state:
@@ -164,7 +161,8 @@ def spotify_callback():
     try:
         # Exchange code for token
         token_url = 'https://accounts.spotify.com/api/token'
-        token_data = {        'grant_type': 'authorization_code',
+        token_data = {
+            'grant_type': 'authorization_code',
             'code': code,
             'redirect_uri': SPOTIFY_REDIRECT_URI,
             'client_id': SPOTIFY_CLIENT_ID,
@@ -175,6 +173,7 @@ def spotify_callback():
             'Content-Type': 'application/x-www-form-urlencoded'
         }
         
+        logging.info(f"🔍 Token exchange request with redirect_uri: {SPOTIFY_REDIRECT_URI}")        
         response = requests.post(token_url, data=token_data, headers=token_headers)
         
         logging.info(f"🔍 Token exchange - Status: {response.status_code}")
@@ -184,6 +183,8 @@ def spotify_callback():
             
             logging.info(f"✅ Token exchange successful")
             logging.info(f"🔍 Token scopes: {token_info.get('scope', 'No scopes returned')}")
+            logging.info(f"🔍 Token type: {token_info.get('token_type', 'Unknown')}")
+            logging.info(f"🔍 Token expires in: {token_info.get('expires_in', 'Unknown')} seconds")
             
             # Make session permanent for better persistence
             session.permanent = True
@@ -202,11 +203,12 @@ def spotify_callback():
                 logging.info(f"✅ User authenticated: {user_info.get('display_name')}")
                 return redirect(url_for('index'))
             else:
-                logging.error("❌ Failed to get user info")
-                return redirect(url_for('index'))
+                logging.error("❌ Failed to get user info - redirecting to login")
+                session.pop('oauth_state', None)
+                return redirect(url_for('login_page'))
         else:
             logging.error(f"❌ Token exchange failed: {response.status_code}")
-            return redirect(url_for('index'))
+            return redirect(url_for('login_page'))
     
     except Exception as e:
         logging.error(f"❌ OAuth callback error: {str(e)}")
@@ -216,6 +218,11 @@ def get_user_info(access_token):
     """Get user information from Spotify"""
     try:
         headers = {'Authorization': f'Bearer {access_token}'}
+        
+        # Log token details for debugging (first/last 10 chars only for security)
+        token_preview = f"{access_token[:10]}...{access_token[-10:]}" if len(access_token) > 20 else "short_token"
+        logging.info(f"🔍 Making user info request with token: {token_preview}")
+        
         response = requests.get('https://api.spotify.com/v1/me', headers=headers)
         
         logging.info(f"🔍 User info request - Status: {response.status_code}")
@@ -226,14 +233,48 @@ def get_user_info(access_token):
             return user_data
         elif response.status_code == 401:
             logging.error(f"❌ Failed to get user info: 401 - Token expired or invalid")
+            logging.error(f"🔍 Response headers: {dict(response.headers)}")
             logging.error(f"🔍 Response: {response.text}")
-            return None
-        elif response.status_code == 403:
-            logging.error(f"❌ Failed to get user info: 403 - Insufficient permissions")
+            return None        elif response.status_code == 403:
+            logging.error(f"❌ Failed to get user info: 403 - Insufficient permissions or app configuration issue")
+            logging.error(f"🔍 This usually means:")
+            logging.error(f"   1. Redirect URI not configured in Spotify Dashboard")
+            logging.error(f"   2. App needs additional scopes or approval")
+            logging.error(f"   3. App is not in development mode")
+            logging.error(f"🔍 Response headers: {dict(response.headers)}")
             logging.error(f"🔍 Response: {response.text}")
+            
+            # Test if the token works with other endpoints
+            logging.info("🔍 Testing token with other Spotify endpoints...")
+            
+            # Test search endpoint (no special permissions needed)
+            try:
+                search_response = requests.get('https://api.spotify.com/v1/search?q=test&type=track&limit=1', headers=headers)
+                logging.info(f"🔍 Search endpoint test: {search_response.status_code}")
+                if search_response.status_code == 200:
+                    logging.info("✅ Token works for search - issue is specifically with /me endpoint")
+                else:
+                    logging.error(f"❌ Search endpoint also failed: {search_response.text}")
+            except Exception as e:
+                logging.error(f"❌ Error testing search endpoint: {str(e)}")
+            
+            # Test playlists endpoint (requires playlist scopes)
+            try:
+                playlists_response = requests.get('https://api.spotify.com/v1/me/playlists?limit=1', headers=headers)
+                logging.info(f"🔍 Playlists endpoint test: {playlists_response.status_code}")
+                if playlists_response.status_code == 200:
+                    logging.info("✅ Token works for playlists - issue is with user-read-private scope")
+                elif playlists_response.status_code == 403:
+                    logging.error("❌ Playlists endpoint also returns 403 - broader scope issue")
+                else:
+                    logging.error(f"❌ Playlists endpoint failed: {playlists_response.text}")
+            except Exception as e:
+                logging.error(f"❌ Error testing playlists endpoint: {str(e)}")
+            
             return None
         else:
             logging.error(f"❌ Failed to get user info: {response.status_code}")
+            logging.error(f"🔍 Response headers: {dict(response.headers)}")
             logging.error(f"🔍 Response: {response.text}")
             return None
     except Exception as e:
@@ -265,6 +306,57 @@ def health():
         'timestamp': datetime.now().isoformat(),
         'redirect_uri': SPOTIFY_REDIRECT_URI
     }), 200
+
+@app.route('/debug-auth')
+def debug_auth():
+    """Debug endpoint to check authentication configuration"""
+    return jsonify({
+        'client_id': SPOTIFY_CLIENT_ID[:10] + '...' if SPOTIFY_CLIENT_ID else 'Missing',
+        'redirect_uri': SPOTIFY_REDIRECT_URI,
+        'scopes': SPOTIFY_SCOPES,
+        'session_info': {
+            'has_token': bool(session.get('spotify_token')),
+            'has_refresh_token': bool(session.get('spotify_refresh_token')),
+            'has_user_info': bool(session.get('user_info')),
+            'token_expires': session.get('spotify_token_expires', 0)
+        }
+    })
+
+@app.route('/debug-spotify-token')
+def debug_spotify_token():
+    """Debug endpoint to test current Spotify token with various endpoints"""
+    access_token = session.get('spotify_token')
+    if not access_token:
+        return jsonify({'error': 'No token in session'}), 401
+    
+    headers = {'Authorization': f'Bearer {access_token}'}
+    results = {}
+    
+    # Test different endpoints
+    endpoints = [
+        ('search', 'https://api.spotify.com/v1/search?q=test&type=track&limit=1'),
+        ('me', 'https://api.spotify.com/v1/me'),
+        ('playlists', 'https://api.spotify.com/v1/me/playlists?limit=1'),
+        ('player', 'https://api.spotify.com/v1/me/player')
+    ]
+    
+    for name, url in endpoints:
+        try:
+            response = requests.get(url, headers=headers)
+            results[name] = {
+                'status_code': response.status_code,
+                'headers': dict(response.headers),
+                'response': response.text[:500] if response.text else 'No response body'
+            }
+        except Exception as e:
+            results[name] = {'error': str(e)}
+    
+    return jsonify({
+        'token_preview': f"{access_token[:10]}...{access_token[-10:]}" if len(access_token) > 20 else "short_token",
+        'token_expires': session.get('spotify_token_expires', 0),
+        'current_time': int(time.time()),
+        'endpoints': results
+    })
 
 @app.errorhandler(429)
 def rate_limit_exceeded(error):
