@@ -2075,9 +2075,19 @@ HTML_TEMPLATE = """
             } else {
                 // Normal page load
                 loadUserInfo();
-            }
-        });
+            }        });
     </script>
+    
+    <!-- Footer with legal links -->
+    <footer style="text-align: center; margin-top: 40px; padding: 20px; color: var(--light-text); font-size: 0.9em;">
+        <div style="margin-bottom: 10px;">
+            <a href="/privacy-policy" style="color: var(--medium-text); text-decoration: none; margin: 0 15px;" target="_blank">Privacy Policy</a>
+            <a href="/terms-of-service" style="color: var(--medium-text); text-decoration: none; margin: 0 15px;" target="_blank">Terms of Service</a>
+        </div>
+        <div style="font-size: 0.8em; color: var(--light-text);">
+            © 2025 Dreamify. All rights reserved.
+        </div>
+    </footer>
 </body>
 </html>
 """

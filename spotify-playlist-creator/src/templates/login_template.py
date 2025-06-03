@@ -307,8 +307,15 @@ LOGIN_TEMPLATE = """
     <script>
         function loginToSpotify() {
             window.location.href = '/auth/login';
-        }
-    </script>
+        }    </script>
+    
+    <!-- Footer with legal links -->
+    <footer style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); text-align: center; color: var(--light-text); font-size: 0.85em;">
+        <div>
+            <a href="/privacy-policy" style="color: var(--medium-text); text-decoration: none; margin: 0 15px;" target="_blank">Privacy Policy</a>
+            <a href="/terms-of-service" style="color: var(--medium-text); text-decoration: none; margin: 0 15px;" target="_blank">Terms of Service</a>
+        </div>
+    </footer>
 </body>
 </html>
 """

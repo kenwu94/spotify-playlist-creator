@@ -16,6 +16,8 @@ from routes.playlist_routes import playlist_bp
 from routes.auth_routes import auth_bp
 from templates.html_template import HTML_TEMPLATE
 from templates.login_template import LOGIN_TEMPLATE
+from templates.privacy_policy import PRIVACY_POLICY_TEMPLATE
+from templates.terms_of_service import TERMS_OF_SERVICE_TEMPLATE
 from services.spotify_service import SpotifyService
 from services.rate_limiter import rate_limit
 
@@ -432,6 +434,16 @@ def debug_logout():
     session.clear()
     logging.info("🔄 Session cleared for fresh authentication")
     return jsonify({'message': 'Session cleared. You can now login with fresh permissions.'})
+
+@app.route('/privacy-policy')
+def privacy_policy():
+    """Privacy Policy page required for Spotify app review"""
+    return render_template_string(PRIVACY_POLICY_TEMPLATE)
+
+@app.route('/terms-of-service')
+def terms_of_service():
+    """Terms of Service page required for Spotify app review"""
+    return render_template_string(TERMS_OF_SERVICE_TEMPLATE)
 
 @app.errorhandler(429)
 def rate_limit_exceeded(error):
