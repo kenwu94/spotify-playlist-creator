@@ -72,8 +72,8 @@ def require_auth():
     
     logging.info(f"🔍 require_auth() - token: {'Present' if access_token else 'Missing'}, user_info: {'Present' if user_info else 'Missing'}")
     
-    if not access_token or not user_info:
-        logging.warning(f"❌ Missing auth data - token: {'Present' if access_token else 'Missing'}, user_info: {'Present' if user_info else 'Missing'}")
+    if not access_token:
+        logging.warning(f"❌ Missing access token")
         return False
     
     # Check if token is expired or expires within 5 minutes
@@ -82,10 +82,29 @@ def require_auth():
         logging.info(f"🔄 Token expired or expiring soon (expires: {token_expires}, current: {current_time}), attempting refresh...")
         if refresh_user_token():
             logging.info("✅ Token refreshed successfully")
-            return True
+            # Update token for user info check
+            access_token = session.get('spotify_token')
         else:
             logging.warning("❌ Token refresh failed")
             return False
+    
+    # If we have a valid token but missing user_info, try to get it
+    if not user_info and access_token:
+        logging.info("🔄 Valid token but missing user_info, attempting to retrieve...")
+        user_info = get_user_info(access_token)
+        if user_info:
+            session['user_info'] = user_info
+            session.modified = True
+            logging.info("✅ Successfully retrieved and stored user_info")
+        else:
+            logging.warning("⚠️ Could not retrieve user_info, but token is valid - allowing access")
+            # Create minimal user info to prevent future failures
+            session['user_info'] = {
+                'id': 'unknown',
+                'display_name': 'Spotify User',
+                'email': None
+            }
+            session.modified = True
     
     logging.info("✅ Authentication check passed")
     return True
@@ -205,26 +224,43 @@ def spotify_callback():
             # Store tokens in session
             session['spotify_token'] = token_info['access_token']
             session['spotify_refresh_token'] = token_info.get('refresh_token')
-            session['spotify_token_expires'] = int(time.time()) + token_info.get('expires_in', 3600)
-            
-            # Get user info
+            session['spotify_token_expires'] = int(time.time()) + token_info.get('expires_in', 3600)            # Get user info with retry mechanism
             user_info = get_user_info(token_info['access_token'])
+            logging.info(f"🔍 get_user_info returned: {user_info is not None}")
+            
+            # If first attempt fails, try once more after a short delay
+            if not user_info:
+                logging.warning("⚠️ First user info attempt failed, retrying...")
+                time.sleep(1)  # Brief delay
+                user_info = get_user_info(token_info['access_token'])
+                logging.info(f"🔍 get_user_info retry returned: {user_info is not None}")
+            
+            # Clean up OAuth state regardless of user info success
+            session.pop('oauth_state', None)
+            
             if user_info:
                 session['user_info'] = user_info
-                session.pop('oauth_state', None)
-                  # Force session commit
-                session.modified = True
-                
                 logging.info(f"✅ User authenticated: {user_info.get('display_name')}")
-                logging.info(f"🔍 Session keys after login: {list(session.keys())}")
-                logging.info(f"🔍 Session token stored: {'spotify_token' in session}")
-                logging.info(f"🔍 Session user_info stored: {'user_info' in session}")
-                
-                # Add ?from=login parameter to trigger proper post-login handling
-                return redirect(url_for('index') + '?from=login')
+                logging.info(f"✅ User info stored in session")
             else:
-                logging.error("❌ Failed to get user info")
-                return redirect(url_for('index') + '?from=login')
+                logging.error("❌ Failed to get user info after retry")
+                # Create minimal user info to prevent redirect loop
+                session['user_info'] = {
+                    'id': 'unknown',
+                    'display_name': 'Spotify User',
+                    'email': None
+                }
+                logging.info("⚠️ Using minimal user info to prevent redirect loop")
+            
+            # Force session commit
+            session.modified = True
+            
+            logging.info(f"🔍 Final session keys: {list(session.keys())}")
+            logging.info(f"🔍 Session token stored: {'spotify_token' in session}")
+            logging.info(f"🔍 Session user_info stored: {'user_info' in session}")
+            
+            # Add ?from=login parameter to trigger proper post-login handling
+            return redirect(url_for('index') + '?from=login')
         else:
             logging.error(f"❌ Token exchange failed: {response.status_code}")
             return redirect(url_for('login_page'))
@@ -237,13 +273,17 @@ def get_user_info(access_token):
     """Get user information from Spotify"""
     try:
         headers = {'Authorization': f'Bearer {access_token}'}
-        response = requests.get('https://api.spotify.com/v1/me', headers=headers)
+        logging.info(f"🔍 Making request to Spotify API with token: {access_token[:20]}...")
+        
+        response = requests.get('https://api.spotify.com/v1/me', headers=headers, timeout=10)
         
         logging.info(f"🔍 User info request - Status: {response.status_code}")
+        logging.info(f"🔍 Response headers: {dict(response.headers)}")
         
         if response.status_code == 200:
             user_data = response.json()
             logging.info(f"✅ Successfully got user info for: {user_data.get('display_name', 'Unknown')}")
+            logging.info(f"🔍 User data keys: {list(user_data.keys())}")
             return user_data
         elif response.status_code == 401:
             logging.error(f"❌ Failed to get user info: 401 - Token expired or invalid")
@@ -257,8 +297,14 @@ def get_user_info(access_token):
             logging.error(f"❌ Failed to get user info: {response.status_code}")
             logging.error(f"🔍 Response: {response.text}")
             return None
+    except requests.exceptions.Timeout:
+        logging.error(f"❌ Timeout error getting user info")
+        return None
+    except requests.exceptions.RequestException as e:
+        logging.error(f"❌ Request error getting user info: {str(e)}")
+        return None
     except Exception as e:
-        logging.error(f"❌ Error getting user info: {str(e)}")
+        logging.error(f"❌ Unexpected error getting user info: {str(e)}")
         return None
 
 @app.route('/api/user')
