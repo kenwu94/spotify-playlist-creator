@@ -171,11 +171,15 @@ def spotify_callback():
         
         token_headers = {
             'Content-Type': 'application/x-www-form-urlencoded'
-        }
-        response = requests.post(token_url, data=token_data, headers=token_headers)
+        }        response = requests.post(token_url, data=token_data, headers=token_headers)
+        
+        logging.info(f"🔍 Token exchange - Status: {response.status_code}")
         
         if response.status_code == 200:
             token_info = response.json()
+            
+            logging.info(f"✅ Token exchange successful")
+            logging.info(f"🔍 Token scopes: {token_info.get('scope', 'No scopes returned')}")
             
             # Make session permanent for better persistence
             session.permanent = True
@@ -210,10 +214,23 @@ def get_user_info(access_token):
         headers = {'Authorization': f'Bearer {access_token}'}
         response = requests.get('https://api.spotify.com/v1/me', headers=headers)
         
+        logging.info(f"🔍 User info request - Status: {response.status_code}")
+        
         if response.status_code == 200:
-            return response.json()
+            user_data = response.json()
+            logging.info(f"✅ Successfully got user info for: {user_data.get('display_name', 'Unknown')}")
+            return user_data
+        elif response.status_code == 401:
+            logging.error(f"❌ Failed to get user info: 401 - Token expired or invalid")
+            logging.error(f"🔍 Response: {response.text}")
+            return None
+        elif response.status_code == 403:
+            logging.error(f"❌ Failed to get user info: 403 - Insufficient permissions")
+            logging.error(f"🔍 Response: {response.text}")
+            return None
         else:
             logging.error(f"❌ Failed to get user info: {response.status_code}")
+            logging.error(f"🔍 Response: {response.text}")
             return None
     except Exception as e:
         logging.error(f"❌ Error getting user info: {str(e)}")
