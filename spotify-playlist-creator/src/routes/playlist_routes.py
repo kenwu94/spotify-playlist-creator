@@ -56,7 +56,7 @@ def refresh_access_token():
 
 @playlist_bp.route('/create-playlist', methods=['POST'])
 @rate_limit(max_requests=5, window_seconds=60, per='ip')  # General rate limit
-@openai_rate_limit(estimated_tokens=2000, model="gpt-4")  # OpenAI specific limit
+@openai_rate_limit(estimated_tokens=800, model="gpt-3.5-turbo")  # Reduced tokens estimate
 def create_playlist():
     """Create a playlist with optional user preferences"""
     try:
@@ -169,3 +169,22 @@ def rate_limit_status():
     """Get current rate limit status"""
     from services.rate_limiter import openai_rate_limiter
     return jsonify(openai_rate_limiter.get_status())
+
+@playlist_bp.route('/reset-rate-limits', methods=['POST'])
+def reset_rate_limits():
+    """Reset rate limits for testing (remove in production)"""
+    from services.rate_limiter import openai_rate_limiter, rate_limiter
+    try:
+        # Reset OpenAI rate limiter
+        openai_rate_limiter.requests.clear()
+        openai_rate_limiter.daily_cost = 0.0
+        openai_rate_limiter.daily_reset_time = time.time() + 86400
+        
+        # Reset general rate limiter
+        rate_limiter.requests.clear()
+        
+        logging.info("✅ Rate limits reset successfully")
+        return jsonify({'success': True, 'message': 'Rate limits reset successfully'})
+    except Exception as e:
+        logging.error(f"❌ Error resetting rate limits: {str(e)}")
+        return jsonify({'error': f'Failed to reset rate limits: {str(e)}'}), 500

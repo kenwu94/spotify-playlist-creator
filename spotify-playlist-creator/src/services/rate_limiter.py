@@ -77,12 +77,11 @@ class OpenAIRateLimiter:
         self.requests = defaultdict(deque)
         self.tokens_used = defaultdict(deque)
         self.lock = threading.Lock()
-        
-        # Rate limits (adjust based on your OpenAI plan)
-        self.REQUESTS_PER_MINUTE = 20  # Adjust based on your tier
-        self.TOKENS_PER_MINUTE = 40000  # Adjust based on your tier
-        self.REQUESTS_PER_DAY = 1000   # Daily safety limit
-        self.COST_LIMIT_PER_DAY = 2  # Maximum daily cost in USD
+          # Rate limits (adjust based on your OpenAI plan)
+        self.REQUESTS_PER_MINUTE = 50  # Increased for testing
+        self.TOKENS_PER_MINUTE = 80000  # Increased for testing
+        self.REQUESTS_PER_DAY = 2000   # Increased daily safety limit
+        self.COST_LIMIT_PER_DAY = 5.0  # Increased maximum daily cost in USD
         
         self.daily_cost = 0.0
         self.daily_reset_time = time.time() + 86400  # Reset daily limits

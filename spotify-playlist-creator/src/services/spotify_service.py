@@ -431,7 +431,8 @@ Focus on creating a playlist that would genuinely resonate with someone feeling 
         
         return response
 
-    # Keep existing methods    def create_playlist(self, access_token, playlist_name, description, song_ids):
+    # Keep existing methods
+    def create_playlist(self, access_token, playlist_name, description, song_ids):
         """Create a Spotify playlist using the working logic"""
         try:
             # Get user ID using the provided access token
