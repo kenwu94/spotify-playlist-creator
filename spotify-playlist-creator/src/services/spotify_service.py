@@ -14,8 +14,7 @@ class SpotifyService:
         self.client_id = os.getenv('SPOTIFY_CLIENT_ID')
         self.client_secret = os.getenv('SPOTIFY_CLIENT_SECRET')
         self.scope = "playlist-modify-public playlist-modify-private user-read-private user-read-email"
-        
-        # Initialize OpenAI client
+          # Initialize OpenAI client
         self.openai_client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
         
     def authenticate(self):
@@ -38,11 +37,10 @@ class SpotifyService:
             
             print("✅ Successfully authenticated with Spotify API for searching")
             return True
-            
         except Exception as e:
             print(f"❌ Failed to authenticate with Spotify: {e}")
             return False
-    
+
     def get_user_id(self, token):
         """Get user ID from access token"""
         url = 'https://api.spotify.com/v1/me'
@@ -53,7 +51,11 @@ class SpotifyService:
         
         # If 401, the user token has expired and needs to be refreshed via OAuth
         if response.status_code == 401:
-            raise Exception("User access token expired - user needs to re-authenticate")
+            raise Exception("User access token expired - please refresh the page and log in again")
+        elif response.status_code == 403:
+            raise Exception("Insufficient permissions - please re-authorize the application")
+        elif response.status_code != 200:
+            raise Exception(f"Failed to get user info: HTTP {response.status_code}")
             
         response.raise_for_status()
         return response.json()['id']
@@ -429,8 +431,7 @@ Focus on creating a playlist that would genuinely resonate with someone feeling 
         
         return response
 
-    # Keep existing methods
-    def create_playlist(self, access_token, playlist_name, description, song_ids):
+    # Keep existing methods    def create_playlist(self, access_token, playlist_name, description, song_ids):
         """Create a Spotify playlist using the working logic"""
         try:
             # Get user ID using the provided access token
@@ -457,7 +458,11 @@ Focus on creating a playlist that would genuinely resonate with someone feeling 
             
             # If 401, the user token has expired
             if response.status_code == 401:
-                raise Exception("User access token expired - user needs to re-authenticate")
+                raise Exception("User access token expired - please refresh the page and log in again")
+            elif response.status_code == 403:
+                raise Exception("Insufficient permissions - please re-authorize the application")
+            elif response.status_code != 201:
+                raise Exception(f"Failed to create playlist: HTTP {response.status_code}")
                 
             response.raise_for_status()
             playlist = response.json()

@@ -30,6 +30,12 @@ app = Flask(__name__, static_folder='resources', static_url_path='/static')
 # Use environment variables for production
 app.secret_key = os.getenv('SECRET_KEY', os.getenv('FLASK_SECRET_KEY', 'your-secret-key-here'))
 
+# Configure session for production
+app.config['SESSION_COOKIE_SECURE'] = True  # Use HTTPS
+app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent XSS
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # CSRF protection
+app.config['PERMANENT_SESSION_LIFETIME'] = 3600  # 1 hour
+
 # Spotify OAuth settings - Updated for production
 SPOTIFY_CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID')
 SPOTIFY_CLIENT_SECRET = os.getenv('SPOTIFY_CLIENT_SECRET')
@@ -47,18 +53,70 @@ app.register_blueprint(playlist_bp)
 app.register_blueprint(auth_bp, url_prefix='/auth')
 
 def require_auth():
-    """Check if user is authenticated"""
-    return session.get('spotify_token') and session.get('user_info')
+    """Check if user is authenticated and refresh token if needed"""
+    access_token = session.get('spotify_token')
+    user_info = session.get('user_info')
+    token_expires = session.get('spotify_token_expires', 0)
+    
+    if not access_token or not user_info:
+        return False
+    
+    # Check if token is expired or expires within 5 minutes
+    if token_expires < (int(time.time()) + 300):
+        logging.info("🔄 Token expired or expiring soon, attempting refresh...")
+        if refresh_user_token():
+            logging.info("✅ Token refreshed successfully")
+            return True
+        else:
+            logging.warning("❌ Token refresh failed")
+            return False
+    
+    return True
+
+def refresh_user_token():
+    """Refresh the user's access token using the refresh token"""
+    refresh_token = session.get('spotify_refresh_token')
+    
+    if not refresh_token:
+        logging.error("❌ No refresh token available")
+        return False
+    
+    try:
+        token_url = 'https://accounts.spotify.com/api/token'
+        token_data = {
+            'grant_type': 'refresh_token',
+            'refresh_token': refresh_token,
+            'client_id': SPOTIFY_CLIENT_ID,
+            'client_secret': SPOTIFY_CLIENT_SECRET
+        }
+        
+        response = requests.post(token_url, data=token_data)
+        
+        if response.status_code == 200:
+            token_info = response.json()
+            
+            # Update session with new token
+            session['spotify_token'] = token_info['access_token']
+            session['spotify_token_expires'] = int(time.time()) + token_info.get('expires_in', 3600)
+            
+            # Refresh token might be rotated
+            if 'refresh_token' in token_info:
+                session['spotify_refresh_token'] = token_info['refresh_token']
+            
+            logging.info("✅ Token refreshed successfully")
+            return True
+        else:
+            logging.error(f"❌ Token refresh failed: {response.status_code}")
+            return False
+            
+    except Exception as e:
+        logging.error(f"❌ Error refreshing token: {str(e)}")
+        return False
 
 @app.route('/')
 def index():
-    """Main page - shows the playlist creator or redirects to login"""
-    # Check if user is authenticated
-    if not require_auth():
-        logging.info("🔒 User not authenticated, redirecting to login")
-        return redirect(url_for('login_page'))
-    
-    logging.info("📄 Serving main page to authenticated user")
+    """Main page - shows the playlist creator"""
+    logging.info("📄 Serving main page")
     return render_template_string(HTML_TEMPLATE)
 
 @app.route('/login')
@@ -104,8 +162,7 @@ def spotify_callback():
     try:
         # Exchange code for token
         token_url = 'https://accounts.spotify.com/api/token'
-        token_data = {
-            'grant_type': 'authorization_code',
+        token_data = {        'grant_type': 'authorization_code',
             'code': code,
             'redirect_uri': SPOTIFY_REDIRECT_URI,
             'client_id': SPOTIFY_CLIENT_ID,
@@ -115,11 +172,13 @@ def spotify_callback():
         token_headers = {
             'Content-Type': 'application/x-www-form-urlencoded'
         }
-        
         response = requests.post(token_url, data=token_data, headers=token_headers)
         
         if response.status_code == 200:
             token_info = response.json()
+            
+            # Make session permanent for better persistence
+            session.permanent = True
             
             # Store tokens in session
             session['spotify_token'] = token_info['access_token']

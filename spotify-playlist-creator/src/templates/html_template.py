@@ -837,69 +837,9 @@ HTML_TEMPLATE = """
                 padding: 20px;
             }
         }
-        
-        .auth-section {
+          .auth-section {
             text-align: center;
             margin: 40px 0;
-        }
-        
-        .login-prompt {
-            background: rgba(247, 245, 237, 0.6);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            padding: 30px;
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 
-                0 8px 25px rgba(0, 0, 0, 0.08),
-                inset 0 1px 0 rgba(255, 255, 255, 0.4);
-        }
-        
-        .login-prompt h3 {
-            background: linear-gradient(135deg, var(--soft-purple), var(--soft-blue));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 15px;
-            font-size: 1.3em;
-            font-weight: 600;
-        }
-        
-        .login-prompt h3::before {
-            content: '🌙';
-            background: linear-gradient(135deg, var(--soft-purple), var(--soft-blue));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            filter: drop-shadow(0 2px 4px rgba(163, 136, 199, 0.3));
-            margin-right: 8px;
-        }
-        
-        .login-prompt p {
-            color: var(--medium-text);
-            margin-bottom: 20px;
-            line-height: 1.6;
-        }
-        
-        .spotify-btn {
-            background: linear-gradient(135deg, #1DB954, #1ed760);
-            color: white;
-            padding: 15px 30px;
-            border: none;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            display: inline-block;
-            margin: 10px 0;
-            box-shadow: 0 8px 25px rgba(29, 185, 84, 0.3);
-        }
-        
-        .spotify-btn:hover {
-            background: linear-gradient(135deg, #1ed760, #1fdf64);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(29, 185, 84, 0.4);
         }
         
         .user-info {
@@ -1580,7 +1520,13 @@ HTML_TEMPLATE = """
             <h3>💡 Try these example prompts:</h3>
             <div class="example"><strong>Simple:</strong> "I get no hoes..."</div>
             <div class="example"><strong>Detailed:</strong> "I want to seem different from the others, so give me songs only from the 80s."</div>
-            <div class="example"><strong>Very Detailed:</strong> "There are few people whom I really love, and still fewer of whom I think well. The more I see of the world, the more am I dissatisfied with it; and every day confirms my belief of the inconsistency of all human characters, and of the little dependence that can be placed on the appearance of merit or sense."</div>
+            <div class="example"><strong>Very Detailed:</strong> "There are few people whom I really love, and still fewer of whom I think well. The more I see of the world, the more am I dissatisfied with it; and every day confirms my belief of the inconsistency of all human characters, and of the little dependence that can be placed on the appearance of merit or sense."</div>        </div>
+          <!-- Authentication Section - User Info Only -->
+        <div id="user-section" class="auth-section" style="display: none;">
+            <div class="user-info">
+                <img id="user-avatar" src="" alt="User Avatar" style="width: 50px; height: 50px; border-radius: 50%; margin-bottom: 10px; display: none;">
+                <span>Welcome, <span id="user-name">User</span>!</span>
+            </div>
         </div>
         
         <form id="playlistForm">
@@ -2035,61 +1981,53 @@ HTML_TEMPLATE = """
                 .catch(() => {
                     showLoginSection();
                 });
-        }
-
-        function showLoginSection() {
-            document.getElementById('login-section').style.display = 'block';
-            document.getElementById('user-section').style.display = 'none';
-            
-            // Disable the form
-            document.getElementById('playlistForm').style.opacity = '0.5';
-            document.getElementById('playlistForm').style.pointerEvents = 'none';
-        }
-
-        function showUserSection(user) {
-            document.getElementById('login-section').style.display = 'none';
+        }        function showLoginSection() {
+            // Redirect to login page instead of showing login section on main page
+            window.location.href = '/login';
+        }        function showUserSection(user) {
             document.getElementById('user-section').style.display = 'block';
             
             // Enable the form
             document.getElementById('playlistForm').style.opacity = '1';
             document.getElementById('playlistForm').style.pointerEvents = 'auto';
             
-            document.getElementById('user-name').textContent = user.display_name;
-            if (user.images && user.images.length > 0) {
-                document.getElementById('user-avatar').src = user.images[0].url;
+            // Update user info
+            const userName = document.getElementById('user-name');
+            const userAvatar = document.getElementById('user-avatar');
+            
+            if (userName) {
+                userName.textContent = user.display_name || 'User';
             }
-        }
-
-        function loginToSpotify() {
-            window.location.href = '/auth/login';
-        }
-
-        function logout() {
+            
+            if (userAvatar && user.images && user.images.length > 0) {
+                userAvatar.src = user.images[0].url;
+                userAvatar.style.display = 'block';
+            }
+        }        function logout() {
             window.location.href = '/auth/logout';
-        }
-
-        async function createPlaylist() {
+        }async function createPlaylist() {
             // Check if user is authenticated
             const authResponse = await fetch('/auth/user-info');
             if (!authResponse.ok) {
-                alert('Please login to Spotify first to create playlists!');
+                // Redirect to login page instead of showing alert
+                window.location.href = '/login';
                 return;
             }
             // ...rest of playlist creation code...
-        }
-
-        async function loadUserInfo() {
+        }        async function loadUserInfo() {
             try {
                 const response = await fetch('/auth/user-info');
                 if (response.ok) {
                     const data = await response.json();
                     showUserSection(data);
                 } else {
-                    showLoginSection();
+                    // Redirect to login page instead of showing login section
+                    window.location.href = '/login';
                 }
             } catch (error) {
                 console.error('Failed to load user info:', error);
-                showLoginSection();
+                // Redirect to login page instead of showing login section
+                window.location.href = '/login';
             }
         }
 

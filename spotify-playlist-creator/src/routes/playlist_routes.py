@@ -4,9 +4,55 @@ from services.spotify_service import SpotifyService
 from services.rate_limiter import rate_limit, openai_rate_limit
 import logging
 import traceback
+import time
+import requests
+import os
 
 # Create blueprint for playlist routes
 playlist_bp = Blueprint('playlist', __name__)
+
+def refresh_access_token():
+    """Refresh the user's access token using the refresh token"""
+    refresh_token = session.get('spotify_refresh_token')
+    
+    if not refresh_token:
+        logging.error("❌ No refresh token available")
+        return False
+    
+    try:
+        SPOTIFY_CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID')
+        SPOTIFY_CLIENT_SECRET = os.getenv('SPOTIFY_CLIENT_SECRET')
+        
+        token_url = 'https://accounts.spotify.com/api/token'
+        token_data = {
+            'grant_type': 'refresh_token',
+            'refresh_token': refresh_token,
+            'client_id': SPOTIFY_CLIENT_ID,
+            'client_secret': SPOTIFY_CLIENT_SECRET
+        }
+        
+        response = requests.post(token_url, data=token_data)
+        
+        if response.status_code == 200:
+            token_info = response.json()
+            
+            # Update session with new token
+            session['spotify_token'] = token_info['access_token']
+            session['spotify_token_expires'] = int(time.time()) + token_info.get('expires_in', 3600)
+            
+            # Refresh token might be rotated
+            if 'refresh_token' in token_info:
+                session['spotify_refresh_token'] = token_info['refresh_token']
+            
+            logging.info("✅ Token refreshed successfully")
+            return True
+        else:
+            logging.error(f"❌ Token refresh failed: {response.status_code}")
+            return False
+            
+    except Exception as e:
+        logging.error(f"❌ Error refreshing token: {str(e)}")
+        return False
 
 @playlist_bp.route('/create-playlist', methods=['POST'])
 @rate_limit(max_requests=5, window_seconds=60, per='ip')  # General rate limit
@@ -14,10 +60,18 @@ playlist_bp = Blueprint('playlist', __name__)
 def create_playlist():
     """Create a playlist with optional user preferences"""
     try:
-        # Check authentication - use the same keys as main.py
+        # Check authentication with token refresh
         if not session.get('spotify_token') or not session.get('user_info'):
             logging.error("❌ User not authenticated")
-            return jsonify({'error': 'Not authenticated with Spotify'}), 401
+            return jsonify({'error': 'Not authenticated with Spotify. Please log in again.'}), 401
+        
+        # Check token expiration and refresh if needed
+        token_expires = session.get('spotify_token_expires', 0)
+        if token_expires < (int(time.time()) + 300):  # Refresh if expires within 5 minutes
+            logging.info("🔄 Token expiring soon, attempting refresh...")
+            if not refresh_access_token():
+                logging.error("❌ Token refresh failed")
+                return jsonify({'error': 'Session expired. Please log in again.'}), 401
         
         # Get the access token from session
         access_token = session.get('spotify_token')
