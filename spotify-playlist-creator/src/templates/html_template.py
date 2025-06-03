@@ -2018,14 +2018,14 @@ HTML_TEMPLATE = """
             }
             
             window.authCheckInProgress = true;
-            
-            try {
+              try {
                 console.log('Loading user info...');
                 const response = await fetch('/api/user', {
                     credentials: 'same-origin', // Ensure cookies are sent
                     cache: 'no-cache' // Prevent caching of auth state
                 });
                 console.log('Auth response status:', response.status);
+                console.log('Auth response headers:', [...response.headers.entries()]);
                 
                 if (response.ok) {
                     const data = await response.json();
@@ -2033,6 +2033,8 @@ HTML_TEMPLATE = """
                     showUserSection(data.user);
                 } else if (response.status === 401) {
                     console.log('User not authenticated (401), redirecting to login');
+                    const responseText = await response.text();
+                    console.log('401 Response body:', responseText);
                     // Only redirect if we're not already on the login page
                     if (!window.location.pathname.includes('/login')) {
                         setTimeout(() => {
@@ -2041,6 +2043,8 @@ HTML_TEMPLATE = """
                     }
                 } else {
                     console.log('Unexpected auth response:', response.status);
+                    const responseText = await response.text();
+                    console.log('Response body:', responseText);
                     // For other errors, show user section with limited functionality
                     showUserSection({ name: 'User', image: '' });
                 }
@@ -2060,14 +2064,14 @@ HTML_TEMPLATE = """
             // Check if we just came from a login redirect
             const urlParams = new URLSearchParams(window.location.search);
             const fromLogin = urlParams.get('from') === 'login';
-            
-            if (fromLogin) {
+              if (fromLogin) {
                 // Remove the parameter from URL
                 const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
                 window.history.replaceState({}, document.title, newUrl);
                 
-                // Give extra time for session to be established
-                setTimeout(loadUserInfo, 2000);
+                // Give extra time for session to be established after login
+                console.log('Post-login flow detected, waiting 3 seconds for session...');
+                setTimeout(loadUserInfo, 3000);
             } else {
                 // Normal page load
                 loadUserInfo();

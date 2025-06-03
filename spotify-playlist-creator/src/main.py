@@ -60,12 +60,16 @@ def require_auth():
     user_info = session.get('user_info')
     token_expires = session.get('spotify_token_expires', 0)
     
+    logging.info(f"🔍 require_auth() - token: {'Present' if access_token else 'Missing'}, user_info: {'Present' if user_info else 'Missing'}")
+    
     if not access_token or not user_info:
+        logging.warning(f"❌ Missing auth data - token: {'Present' if access_token else 'Missing'}, user_info: {'Present' if user_info else 'Missing'}")
         return False
     
     # Check if token is expired or expires within 5 minutes
-    if token_expires < (int(time.time()) + 300):
-        logging.info("🔄 Token expired or expiring soon, attempting refresh...")
+    current_time = int(time.time())
+    if token_expires < (current_time + 300):
+        logging.info(f"🔄 Token expired or expiring soon (expires: {token_expires}, current: {current_time}), attempting refresh...")
         if refresh_user_token():
             logging.info("✅ Token refreshed successfully")
             return True
@@ -73,6 +77,7 @@ def require_auth():
             logging.warning("❌ Token refresh failed")
             return False
     
+    logging.info("✅ Authentication check passed")
     return True
 
 def refresh_user_token():
@@ -187,30 +192,34 @@ def spotify_callback():
             
             # Make session permanent for better persistence
             session.permanent = True
-            
-            # Store tokens in session
+              # Store tokens in session
             session['spotify_token'] = token_info['access_token']
             session['spotify_refresh_token'] = token_info.get('refresh_token')
             session['spotify_token_expires'] = int(time.time()) + token_info.get('expires_in', 3600)
-            
-            # Get user info
+              # Get user info
             user_info = get_user_info(token_info['access_token'])
             if user_info:
                 session['user_info'] = user_info
                 session.pop('oauth_state', None)
                 
+                # Force session commit
+                session.modified = True
+                
                 logging.info(f"✅ User authenticated: {user_info.get('display_name')}")
-                return redirect(url_for('index'))
+                logging.info(f"🔍 Session keys after login: {list(session.keys())}")
+                
+                # Add ?from=login parameter to trigger proper post-login handling
+                return redirect(url_for('index') + '?from=login')
             else:
                 logging.error("❌ Failed to get user info")
-                return redirect(url_for('index'))
+                return redirect(url_for('index') + '?from=login')
         else:
             logging.error(f"❌ Token exchange failed: {response.status_code}")
-            return redirect(url_for('index'))
+            return redirect(url_for('login_page'))
     
     except Exception as e:
         logging.error(f"❌ OAuth callback error: {str(e)}")
-        return redirect(url_for('index'))
+        return redirect(url_for('login_page'))
 
 def get_user_info(access_token):
     """Get user information from Spotify"""
@@ -243,10 +252,17 @@ def get_user_info(access_token):
 @app.route('/api/user')
 def api_user():
     """Get current user info for the frontend"""
+    logging.info(f"🔍 API /api/user called")
+    logging.info(f"🔍 Session keys: {list(session.keys())}")
+    logging.info(f"🔍 Has spotify_token: {'spotify_token' in session}")
+    logging.info(f"🔍 Has user_info: {'user_info' in session}")
+    
     if not require_auth():
+        logging.warning("❌ Authentication failed in /api/user")
         return jsonify({'error': 'Not authenticated'}), 401
     
     user_info = session.get('user_info', {})
+    logging.info(f"✅ User info retrieved successfully: {user_info.get('display_name', 'Unknown')}")
     return jsonify({
         'authenticated': True,
         'user': {
