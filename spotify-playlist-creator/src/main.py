@@ -224,33 +224,45 @@ def spotify_callback():
             # Store tokens in session
             session['spotify_token'] = token_info['access_token']
             session['spotify_refresh_token'] = token_info.get('refresh_token')
-            session['spotify_token_expires'] = int(time.time()) + token_info.get('expires_in', 3600)            # Get user info with retry mechanism
+            session['spotify_token_expires'] = int(time.time()) + token_info.get('expires_in', 3600)            # Get user info with retry mechanism - MORE AGGRESSIVE RETRY
             user_info = get_user_info(token_info['access_token'])
             logging.info(f"🔍 get_user_info returned: {user_info is not None}")
             
-            # If first attempt fails, try once more after a short delay
-            if not user_info:
-                logging.warning("⚠️ First user info attempt failed, retrying...")
-                time.sleep(1)  # Brief delay
+            # If first attempt fails, try up to 3 more times with increasing delays
+            retry_count = 0
+            while not user_info and retry_count < 3:
+                retry_count += 1
+                logging.warning(f"⚠️ User info attempt {retry_count} failed, retrying in {retry_count} seconds...")
+                time.sleep(retry_count)  # 1s, 2s, 3s delays
                 user_info = get_user_info(token_info['access_token'])
-                logging.info(f"🔍 get_user_info retry returned: {user_info is not None}")
+                logging.info(f"🔍 get_user_info retry {retry_count} returned: {user_info is not None}")
             
             # Clean up OAuth state regardless of user info success
             session.pop('oauth_state', None)
             
-            if user_info:
+            if user_info and user_info.get('id') != 'unknown':
                 session['user_info'] = user_info
                 logging.info(f"✅ User authenticated: {user_info.get('display_name')}")
-                logging.info(f"✅ User info stored in session")
+                logging.info(f"✅ Real user info stored in session")
             else:
-                logging.error("❌ Failed to get user info after retry")
-                # Create minimal user info to prevent redirect loop
-                session['user_info'] = {
-                    'id': 'unknown',
-                    'display_name': 'Spotify User',
-                    'email': None
-                }
-                logging.info("⚠️ Using minimal user info to prevent redirect loop")
+                logging.error("❌ Failed to get real user info after all retries")
+                
+                # Try one more time with a fresh request to be absolutely sure
+                logging.warning("🔄 Making final attempt to get user info...")
+                final_user_info = get_user_info(token_info['access_token'])
+                
+                if final_user_info and final_user_info.get('id') != 'unknown':
+                    session['user_info'] = final_user_info
+                    logging.info(f"✅ Final attempt successful: {final_user_info.get('display_name')}")
+                else:
+                    # Only use minimal info as absolute last resort
+                    logging.error("❌ All attempts to get real user info failed - using minimal fallback")
+                    session['user_info'] = {
+                        'id': 'unknown',
+                        'display_name': 'Spotify User',
+                        'email': None
+                    }
+                    logging.info("⚠️ Using minimal user info as last resort")
             
             # Force session commit
             session.modified = True
@@ -358,7 +370,9 @@ def debug_session():
         'session_permanent': session.permanent,
         'environment': os.getenv('ENVIRONMENT'),
         'vercel': os.getenv('VERCEL'),
-        'is_production': is_production
+        'is_production': is_production,
+        'user_info_content': session.get('user_info', {}),  # Show actual user_info content
+        'spotify_scopes': SPOTIFY_SCOPES  # Show the scopes being requested
     }
     
     if 'spotify_token_expires' in session:
@@ -367,6 +381,57 @@ def debug_session():
         session_data['token_valid'] = session['spotify_token_expires'] > int(time.time())
     
     return jsonify(session_data)
+
+@app.route('/debug/token-test')
+def debug_token_test():
+    """Test current token permissions"""
+    access_token = session.get('spotify_token')
+    if not access_token:
+        return jsonify({'error': 'No token available'}), 401
+    
+    headers = {'Authorization': f'Bearer {access_token}'}
+    
+    # Test different endpoints to check permissions
+    results = {}
+    
+    try:
+        # Test user info
+        user_response = requests.get('https://api.spotify.com/v1/me', headers=headers, timeout=10)
+        results['user_info'] = {
+            'status': user_response.status_code,
+            'data': user_response.json() if user_response.status_code == 200 else user_response.text
+        }
+        
+        # Test playlists endpoint
+        playlists_response = requests.get('https://api.spotify.com/v1/me/playlists', headers=headers, timeout=10)
+        results['playlists'] = {
+            'status': playlists_response.status_code,
+            'can_read_playlists': playlists_response.status_code == 200
+        }
+        
+        # Test create playlist (we'll just check if we can GET user ID for playlist creation)
+        if user_response.status_code == 200:
+            user_id = user_response.json().get('id')
+            if user_id:
+                # Test if we can access the user's profile (needed for playlist creation)
+                profile_response = requests.get(f'https://api.spotify.com/v1/users/{user_id}', headers=headers, timeout=10)
+                results['can_create_playlists'] = {
+                    'status': profile_response.status_code,
+                    'user_id': user_id,
+                    'profile_accessible': profile_response.status_code == 200
+                }
+        
+    except Exception as e:
+        results['error'] = str(e)
+    
+    return jsonify(results)
+
+@app.route('/debug/logout')
+def debug_logout():
+    """Force logout and clear session - useful for testing fresh auth"""
+    session.clear()
+    logging.info("🔄 Session cleared for fresh authentication")
+    return jsonify({'message': 'Session cleared. You can now login with fresh permissions.'})
 
 @app.errorhandler(429)
 def rate_limit_exceeded(error):

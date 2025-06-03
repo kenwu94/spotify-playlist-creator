@@ -30,7 +30,7 @@ def login():
         'scope': scopes,
         'redirect_uri': redirect_uri,
         'state': state,
-        'show_dialog': 'true'
+        'show_dialog': 'true'  # Force show dialog to ensure fresh permissions
     }
     url = 'https://accounts.spotify.com/authorize?' + urllib.parse.urlencode(params)
     return redirect(url)
