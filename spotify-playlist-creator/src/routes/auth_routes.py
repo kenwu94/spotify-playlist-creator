@@ -62,7 +62,8 @@ def refresh_user_token():
     
     if not refresh_token:
         return False
-      try:
+    
+    try:
         SPOTIFY_CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID')
         SPOTIFY_CLIENT_SECRET = os.getenv('SPOTIFY_CLIENT_SECRET')
         
