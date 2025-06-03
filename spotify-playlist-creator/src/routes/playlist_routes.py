@@ -55,7 +55,7 @@ def refresh_access_token():
         return False
 
 @playlist_bp.route('/create-playlist', methods=['POST'])
-@rate_limit(max_requests=5, window_seconds=60, per='ip')  # General rate limit
+@rate_limit(max_requests=20, window_seconds=60, per='ip')  # Much higher for testing
 @openai_rate_limit(estimated_tokens=800, model="gpt-3.5-turbo")  # Reduced tokens estimate
 def create_playlist():
     """Create a playlist with optional user preferences"""

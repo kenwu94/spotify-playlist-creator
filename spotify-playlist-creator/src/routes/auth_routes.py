@@ -2,6 +2,8 @@ from flask import Blueprint, request, redirect, session, url_for, jsonify
 import urllib.parse
 import secrets
 import os
+import time
+import requests
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -60,11 +62,7 @@ def refresh_user_token():
     
     if not refresh_token:
         return False
-    
-    try:
-        import time
-        import requests
-        
+      try:
         SPOTIFY_CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID')
         SPOTIFY_CLIENT_SECRET = os.getenv('SPOTIFY_CLIENT_SECRET')
         
