@@ -14,7 +14,7 @@ my-python-script/
 
 ## Requirements
 
-Before running the script, ensure you have the required dependencies installed. You can find the list of dependencies in the `requirements.txt` file.
+Before running the script, ensure you have the required dependencies installed. You can find the list of dependencies in the `requirements.txt` file
 
 ## Installation
 
